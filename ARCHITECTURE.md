@@ -119,11 +119,27 @@ comments. Highlights:
 
 ## Supabase project setup checklist
 
-**Not yet done — this workspace has no Supabase credentials or CLI
-session, so the steps below could not be executed as part of this issue.
-See "Blocker" below.**
+**Partially done as of 2026-07-31.** `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` were shared on this issue and are now in
+`.env.local` (gitignored, not committed). Read-only checks against the
+live project's REST/Auth endpoints (no writes made) found:
 
-1. Create a Supabase project (supabase.com dashboard).
+- The project (`xrbdqazyhbjmwhilfmkj`) is live and reachable.
+- `sites`, `attendance`, `leave_requests`, `notifications` do **not**
+  exist yet — our migration hasn't been run against this project.
+- A `profiles` table **already exists**, but its columns match neither
+  our HR schema (`employee_code`/`role`/`manager_id`/`site_id` all
+  errored as unknown columns) nor a Supabase quickstart template. A
+  `likes` table also exists (surfaced via a PostgREST "did you mean"
+  hint). **This project has pre-existing schema unrelated to the HR
+  system** — see "Blocker" below before running the migration here.
+- `GET /auth/v1/settings` shows `"mailer_autoconfirm": false` — "Confirm
+  email" is still **enabled** (not yet disabled).
+
+Remaining steps once the project-identity question below is resolved:
+
+1. ~~Create a Supabase project~~ — done, pending confirmation it's the
+   right one (see Blocker).
 2. Run the three migration files in `supabase/migrations/` in order,
    either by pasting them into the SQL Editor, or via
    `supabase link --project-ref <ref>` + `supabase db push` once the CLI
@@ -132,9 +148,9 @@ See "Blocker" below.**
    providers off. Authentication → Settings (or Providers → Email, "Confirm
    email"): **disable "Confirm email"** — mandatory per spec §2/§9, so a
    signed-up user can log in immediately with no verification link.
-4. Project Settings → API: copy the Project URL, `anon` key, and
-   `service_role` key into `.env.local` (copy `.env.local.example` first)
-   and into the Vercel project's environment variables for deployment.
+4. Project Settings → API: copy the `service_role` key into `.env.local`
+   (URL/anon key already there) and all three vars into the Vercel
+   project's environment variables for deployment.
 5. Realtime: migration `0003_realtime.sql` already adds `notifications` to
    the `supabase_realtime` publication; no separate dashboard toggle
    should be needed, but verify under Database → Replication after running
@@ -154,15 +170,31 @@ Geolocation API (HR-11's check-in/out) requires.
 
 ## Blocker: live Supabase provisioning
 
-This workspace has no Supabase account/API access token and no Supabase
-CLI installed, so steps 1–4 above (creating the actual project, running
-the migration against it, disabling "Confirm email", and capturing real
-key values) could not be completed as part of this issue — only the code
-and SQL that implements them could be. This is a first-class blocker for
-the *live* parts of this issue's acceptance criteria ("migration applied",
-"email confirmation disabled"); it does not block any of HR-10 onward's
-*code* work, which only needs the three env vars to exist locally once
-someone with Supabase access completes the checklist above.
+URL + anon key are now available (see checklist above), but two things
+still block this issue's live acceptance criteria:
+
+1. **Project identity needs confirming.** The project these credentials
+   point to already contains a `profiles` table (wrong shape for our
+   schema) and a `likes` table — i.e. pre-existing schema unrelated to
+   the HR system. Running `0001_initial_schema.sql` as-is against it will
+   fail on `CREATE TABLE profiles` ("relation already exists"), and nothing
+   here should assume it's safe to drop tables that might hold someone
+   else's real data. Needs a human answer: is this project dedicated to
+   the HR system (and the existing tables are junk, safe to drop), or is
+   it shared/other-purpose (in which case a fresh project is the fix)?
+2. **No credential that can execute SQL or toggle Auth config.** The anon
+   key can't run DDL or change project config. Once (1) is resolved, this
+   doesn't require sharing more secrets — whoever has dashboard access can
+   paste the three migration files into the SQL Editor (in order) and
+   flip off Authentication → Providers → Email → "Confirm email"
+   directly; no service_role key or DB password needs to change hands for
+   that path. `service_role` is only needed later, for `.env.local`/Vercel
+   (HR-13's admin-bypass insert, HR-17 deploy).
+
+This blocks the *live* parts of this issue's acceptance criteria
+("migration applied", "email confirmation disabled"); it does not block
+HR-10 onward's *code* work, which only needs the three env vars to exist
+locally once someone with Supabase access completes the checklist above.
 
 Separately, `git push` to `origin` (github.com/jabbourWearable/hr-system-2)
 still fails with 403 for this workspace's git credentials — a pre-existing,
