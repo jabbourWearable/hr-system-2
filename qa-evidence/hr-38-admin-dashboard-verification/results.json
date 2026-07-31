@@ -1,0 +1,27 @@
+{
+  "fixtures_created": [
+    "hr38qa.emp1@example.com",
+    "hr38qa.emp2@example.com",
+    "hr38qa.emp3@example.com"
+  ],
+  "overview_stats_after_signup": "28 | Total headcount | 4 | Checked in today | 3 | Currently checked in | 4 | Pending leave requests | 3 | Work sites",
+  "employees_list_row_count": 28,
+  "row_HR38 QA Employee One": "HR38 QA Employee One | — | Employee | Unassigned | Unassigned | Edit",
+  "row_HR38 QA Employee Two": "HR38 QA Employee Two | — | Employee | Unassigned | Unassigned | Edit",
+  "row_HR38 QA Employee Three": "HR38 QA Employee Three | — | Employee | Unassigned | Unassigned | Edit",
+  "edit_hrefs": {
+    "emp1EditHref": "/admin/employees/14f0d913-2800-4a09-8fc2-bf27a3ecfdb5/edit",
+    "emp2EditHref": "/admin/employees/06a54ac5-aafb-4891-9ee5-e506e85999c3/edit"
+  },
+  "emp1_row_after_promotion": "HR38 QA Employee One | — | Manager | Unassigned | Unassigned | Edit",
+  "emp2_row_after_assignment": "HR38 QA Employee Two | — | Employee | HR38 QA Employee One | HR-11 QA Site | Edit",
+  "emp2_manager_dropdown_excludes_self": true,
+  "self_manager_rejection_error_text": null,
+  "self_manager_rejected_stayed_on_edit_page": true,
+  "overview_stats_final": "28 | Total headcount | 4 | Checked in today | 3 | Currently checked in | 4 | Pending leave requests | 3 | Work sites",
+  "emp2_own_dashboard_dl": "Role | Employee | Employee code | Not assigned yet | Manager | 14f0d913-2800-4a09-8fc2-bf27a3ecfdb5 | Site | 3023951c-b642-455c-a0c6-eaf25d93244e",
+  "emp1_manager_visits_admin_final_url": "http://localhost:3000/dashboard",
+  "emp1_manager_visits_admin_employees_final_url": "http://localhost:3000/dashboard",
+  "emp3_employee_visits_admin_final_url": "http://localhost:3000/dashboard",
+  "emp3_employee_visits_admin_employees_final_url": "http://localhost:3000/dashboard"
+}
