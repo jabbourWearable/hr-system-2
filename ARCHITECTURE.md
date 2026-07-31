@@ -47,6 +47,7 @@ src/
     database.ts             # hand-written Database type — regenerate once Supabase is live
 supabase/
   migrations/
+    0000_reset_legacy_dating_app_schema.sql  # drops the project's old (confirmed-retired) dating-app tables
     0001_initial_schema.sql  # profiles, sites, attendance, leave_requests, notifications
     0002_rls_policies.sql    # RLS policies + is_admin()/is_manager_of() helper functions
     0003_realtime.sql        # adds notifications to the supabase_realtime publication
@@ -127,31 +128,38 @@ live project's REST/Auth endpoints (no writes made) found:
 - The project (`xrbdqazyhbjmwhilfmkj`) is live and reachable.
 - `sites`, `attendance`, `leave_requests`, `notifications` do **not**
   exist yet — our migration hasn't been run against this project.
-- A `profiles` table **already exists**, but its columns match neither
-  our HR schema (`employee_code`/`role`/`manager_id`/`site_id` all
-  errored as unknown columns) nor a Supabase quickstart template. A
-  `likes` table also exists (surfaced via a PostgREST "did you mean"
-  hint). **This project has pre-existing schema unrelated to the HR
-  system** — see "Blocker" below before running the migration here.
+- Six legacy tables exist: `profiles`, `likes`, `matches`, `messages`,
+  `blocks`, `reports` — a full dating-app schema (confirmed by the project
+  owner on this issue, 2026-07-31: "This db was used before and its used
+  for dating app I want from you to clear this db and create the new
+  migration"). Every other guessed table name 404'd, so this is the
+  complete legacy schema.
 - `GET /auth/v1/settings` shows `"mailer_autoconfirm": false` — "Confirm
-  email" is still **enabled** (not yet disabled).
+  email" is still **enabled**; the project owner has said they'll disable
+  it themselves.
 
-Remaining steps once the project-identity question below is resolved:
+**Project identity is now confirmed** (was previously the open blocker):
+this project is dedicated to the HR system going forward, and the old
+dating-app tables are junk, safe to drop. `0000_reset_legacy_dating_app_schema.sql`
+does that drop. Remaining steps, in order:
 
-1. ~~Create a Supabase project~~ — done, pending confirmation it's the
-   right one (see Blocker).
-2. Run the three migration files in `supabase/migrations/` in order,
-   either by pasting them into the SQL Editor, or via
-   `supabase link --project-ref <ref>` + `supabase db push` once the CLI
-   is available and authenticated.
-3. Authentication → Providers → Email: leave enabled, leave all other
+1. ~~Create a Supabase project~~ — done.
+2. ~~Confirm project identity~~ — done (see above).
+3. Paste `supabase/migrations/0000_reset_legacy_dating_app_schema.sql`,
+   then `0001_initial_schema.sql`, `0002_rls_policies.sql`, and
+   `0003_realtime.sql`, **in that order**, into the SQL Editor (Supabase
+   dashboard → SQL Editor → New query → Run). Anon key can't execute DDL
+   (see Blocker below), so this needs someone with dashboard access — no
+   new secret has to change hands for it.
+4. Authentication → Providers → Email: leave enabled, leave all other
    providers off. Authentication → Settings (or Providers → Email, "Confirm
    email"): **disable "Confirm email"** — mandatory per spec §2/§9, so a
-   signed-up user can log in immediately with no verification link.
-4. Project Settings → API: copy the `service_role` key into `.env.local`
+   signed-up user can log in immediately with no verification link. (Owner
+   said they'll do this step themselves.)
+5. Project Settings → API: copy the `service_role` key into `.env.local`
    (URL/anon key already there) and all three vars into the Vercel
    project's environment variables for deployment.
-5. Realtime: migration `0003_realtime.sql` already adds `notifications` to
+6. Realtime: migration `0003_realtime.sql` already adds `notifications` to
    the `supabase_realtime` publication; no separate dashboard toggle
    should be needed, but verify under Database → Replication after running
    the migrations.
@@ -170,26 +178,26 @@ Geolocation API (HR-11's check-in/out) requires.
 
 ## Blocker: live Supabase provisioning
 
-URL + anon key are now available (see checklist above), but two things
-still block this issue's live acceptance criteria:
+URL + anon key are available (see checklist above). Project identity is
+now confirmed (2026-07-31, this issue): this project is dedicated to the
+HR system, and its pre-existing dating-app tables are junk, safe to drop.
+The reset migration for that (`0000_reset_legacy_dating_app_schema.sql`)
+is written. One thing still blocks this issue's *live* acceptance
+criteria:
 
-1. **Project identity needs confirming.** The project these credentials
-   point to already contains a `profiles` table (wrong shape for our
-   schema) and a `likes` table — i.e. pre-existing schema unrelated to
-   the HR system. Running `0001_initial_schema.sql` as-is against it will
-   fail on `CREATE TABLE profiles` ("relation already exists"), and nothing
-   here should assume it's safe to drop tables that might hold someone
-   else's real data. Needs a human answer: is this project dedicated to
-   the HR system (and the existing tables are junk, safe to drop), or is
-   it shared/other-purpose (in which case a fresh project is the fix)?
-2. **No credential that can execute SQL or toggle Auth config.** The anon
-   key can't run DDL or change project config. Once (1) is resolved, this
-   doesn't require sharing more secrets — whoever has dashboard access can
-   paste the three migration files into the SQL Editor (in order) and
-   flip off Authentication → Providers → Email → "Confirm email"
-   directly; no service_role key or DB password needs to change hands for
-   that path. `service_role` is only needed later, for `.env.local`/Vercel
-   (HR-13's admin-bypass insert, HR-17 deploy).
+- **No credential here can execute SQL or toggle Auth config.** The anon
+  key can only do row-level REST reads/writes through PostgREST — it
+  can't run DDL (confirmed: `GET /rest/v1/` root/schema introspection
+  itself returns `"Only the service_role API key can be used for this
+  endpoint"` with this key), and PostgREST has no DDL endpoint for any
+  key short of a direct Postgres connection or the Supabase Management
+  API. This doesn't require sharing more secrets: whoever has dashboard
+  access can paste the four migration files (`0000` through `0003`, in
+  order) into the SQL Editor and flip off Authentication → Providers →
+  Email → "Confirm email" directly — no service_role key or DB password
+  needs to change hands for that path. `service_role` is only needed
+  later, for `.env.local`/Vercel (HR-13's admin-bypass insert, HR-17
+  deploy).
 
 This blocks the *live* parts of this issue's acceptance criteria
 ("migration applied", "email confirmation disabled"); it does not block
