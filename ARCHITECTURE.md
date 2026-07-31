@@ -188,6 +188,55 @@ gh auth setup-git`). All commits through `a83560c` (including
 `0000_reset_legacy_dating_app_schema.sql`) are pushed and visible on
 `origin/main`.
 
+## Blocker: Email provider disabled on the live Supabase project (HR-10)
+
+**Status: blocking HR-10's live acceptance criteria as of 2026-07-31.**
+Code is implemented and builds/lints clean (see "Verification done" below),
+but no signup/login/logout can actually be exercised against the live
+project right now.
+
+`GET /auth/v1/settings` on the project shows:
+
+```json
+"external": { "email": false, ... },
+"disable_signup": false,
+"mailer_autoconfirm": true
+```
+
+`external.email: false` is a different toggle than `disable_signup` or
+`mailer_autoconfirm` (both already correct, per the HR-9 checklist above).
+It means the native email+password **auth provider itself** is switched
+off for this project — not merely "confirm email" or "allow signups".
+Confirmed directly against GoTrue:
+
+- `supabase.auth.signUp()` → `422 email_provider_disabled`, `"Email
+  signups are disabled"` (reproduced via the actual `/signup` form in a
+  headless-browser run — screenshot shows the error rendered inline).
+- `POST /auth/v1/token?grant_type=password` (a login attempt) → `422
+  email_provider_disabled`, `"Email logins are disabled"`.
+
+So both signup and login are dead end-to-end until this one project
+setting changes. This is a dashboard/Management-API-level setting, not
+something PostgREST, the anon key, or the (still-blank) service_role key
+can touch — same category as the HR-9 "Confirm email" blocker above.
+
+**Two ways to unblock, either works (same pattern as HR-9's blocker):**
+
+1. *Manual (no secret changes hands):* whoever has Supabase dashboard
+   access opens Authentication → Sign In / Providers → **Email**, and
+   turns the provider **on** (distinct from the "Confirm email" sub-toggle
+   already handled in HR-9). A few seconds.
+2. *Agent-executed:* a Supabase **Personal Access Token** (Dashboard →
+   Account → Access Tokens), then `PATCH
+   https://api.supabase.com/v1/projects/{ref}/config/auth` with
+   `{"external_email_enabled": true}`. Treat the token as sensitive
+   (account-wide) — pass as an env var, don't commit it.
+
+Once this is flipped, re-run the signup → dashboard → logout → login →
+logout flow (headless-browser script used for this issue, not committed —
+recreate from this description) to capture the Evidence Collector
+screenshots and close out HR-10.
+
 ## Theming
 
 Light/dark/system theme toggle, per ArchitectUX's standing foundation
@@ -219,3 +268,28 @@ requirement:
 - Not yet exercised: an actual signed-up user hitting `/dashboard`/`/admin`
   with a real session (no sign-up/login server action exists yet — that's
   HR-10's job, plus its own evidence-collection QA once wired up).
+
+## Verification done for HR-10 (auth + employee profiles)
+
+- Implemented: `src/app/signup/actions.ts` (`signUp()` + insert into
+  `profiles`), `src/app/login/actions.ts` (`signInWithPassword()`),
+  `src/lib/auth/actions.ts` (`logout()` → `signOut()` + redirect),
+  wired to real `useActionState`-backed forms
+  (`src/app/signup/signup-form.tsx`, `src/app/login/login-form.tsx`) and
+  a shared `LogoutButton` (`src/components/auth/logout-button.tsx`) added
+  to `/dashboard` and `/admin`. `src/lib/auth/session.ts` now also
+  surfaces `employeeCode` so the dashboard can render the full profile
+  record (role, employee code, manager, site — nullable fields shown as
+  "Not assigned yet").
+- `npm run build` and `npm run lint` both pass.
+- Headless-browser (Playwright against the local dev server) run
+  confirmed: `/` → `/signup` and `/` → `/login` render correctly;
+  `/dashboard` and `/admin` still redirect unauthenticated visitors to
+  `/login` (guard behavior unaffected by the new logout button); the
+  signup form correctly surfaces a server-side error inline
+  (`role="alert"`) when `signUp()` fails.
+- **Not exercised, blocked**: the actual signup → logged-in-dashboard →
+  logout → login → logout round trip, and the "profiles row created with
+  role='employee'" acceptance criterion. See the blocker section above —
+  the live project rejects all email/password auth right now
+  (`email_provider_disabled`), independent of this code.

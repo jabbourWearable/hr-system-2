@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/auth/session";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 // Reference implementation of the role-gated route pattern: only
 // profiles.role = 'admin' reaches this page (server-side check — see
@@ -9,11 +10,16 @@ export default async function AdminPage() {
   const user = await requireRole("admin");
 
   return (
-    <main className="flex flex-1 flex-col gap-2 px-6 py-8">
-      <h1 className="text-xl font-semibold">Admin</h1>
-      <p className="text-sm text-foreground-muted">
-        Signed in as {user.fullName} ({user.role}).
-      </p>
+    <main className="flex flex-1 flex-col gap-4 px-6 py-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">Admin</h1>
+          <p className="text-sm text-foreground-muted">
+            Signed in as {user.fullName} ({user.role}).
+          </p>
+        </div>
+        <LogoutButton />
+      </div>
       {/* Employee/site management, company-wide attendance & leave
           overview (HR-15) build out from here. */}
     </main>

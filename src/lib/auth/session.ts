@@ -8,6 +8,7 @@ export type AuthenticatedUser = {
   id: string;
   email: string | null;
   fullName: string;
+  employeeCode: string | null;
   role: Role;
   managerId: string | null;
   siteId: string | null;
@@ -33,7 +34,7 @@ export const getAuthenticatedUser = cache(
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name, role, manager_id, site_id")
+      .select("full_name, employee_code, role, manager_id, site_id")
       .eq("id", user.id)
       .single();
 
@@ -43,6 +44,7 @@ export const getAuthenticatedUser = cache(
       id: user.id,
       email: user.email ?? null,
       fullName: profile.full_name,
+      employeeCode: profile.employee_code,
       role: profile.role,
       managerId: profile.manager_id,
       siteId: profile.site_id,
