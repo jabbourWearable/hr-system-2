@@ -15,6 +15,7 @@ export type Database = {
         Row: {
           id: string;
           full_name: string;
+          email: string | null;
           employee_code: string | null;
           role: Role;
           manager_id: string | null;
@@ -24,6 +25,7 @@ export type Database = {
         Insert: {
           id: string;
           full_name: string;
+          email?: string | null;
           employee_code?: string | null;
           role?: Role;
           manager_id?: string | null;

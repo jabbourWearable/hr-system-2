@@ -547,3 +547,74 @@ range narrowed to "today" returned exactly the 3 rows actually dated
 today (verified independently via a direct REST query first, since the
 project already had two same-day leftover rows from prior QA). Screenshots
 in `qa-evidence/hr-12-attendance-history/`.
+
+## Admin dashboard (HR-15)
+
+Implements spec §5 item 9 / §5.9 (task list Tasks 19-20): employee account
+management (role/manager/site assignment) and a company-wide overview.
+`profiles_update_admin` (0002_rls_policies.sql) already covers the write
+this feature needs — no new RLS. One new schema gap (see below).
+
+- `src/app/admin/page.tsx` — turned from a plain nav page into the overview
+  (Task 20): total headcount, checked-in-today count, currently-checked-in
+  (open shifts) count, pending leave requests count, and site count —
+  plain `count: "exact", head: true` rollups, no payroll/hours-worked/shift
+  calculations (§6, explicitly out of scope) — plus links into every
+  detailed admin view (employees, sites, attendance, leave).
+- `src/app/admin/employees/` — `page.tsx` (list: name, email, employee
+  code, role, manager, site), `[id]/edit/page.tsx` + `actions.ts`
+  (`updateEmployeeProfile`), `employee-form.tsx` (role/manager/site
+  selects, same `useActionState` shape as `SiteForm`/`ReviewForm`).
+  `managerId`/`siteId` are optional ("Unassigned"); a profile can't be set
+  as its own manager (rejected server-side, and excluded from the
+  dropdown's own options).
+- `supabase/migrations/0007_add_profiles_email.sql` — adds
+  `profiles.email` (nullable). Neither the spec's §7 sketch nor
+  `0001_initial_schema.sql` has an email column on `profiles` (it lives on
+  `auth.users` only), but Task 19's acceptance criteria explicitly require
+  showing it in the employee list — same category of gap as HR-13's
+  `review_comment` (0005). No `SUPABASE_SERVICE_ROLE_KEY` is available to
+  read `auth.users` from application code, so this is handled entirely at
+  the database layer instead: the migration backfills existing rows via a
+  direct SQL join (the SQL Editor runs as the database owner, no
+  service_role/anon key needed) and adds a `before insert` trigger
+  (`sync_profile_email()`, security definer) that copies
+  `auth.users.email` into the new row for every future sign-up.
+  **Deliberately does not touch `src/app/signup/actions.ts`** (HR-10,
+  already live and QA-verified) — coupling that Server Action's `profiles`
+  insert to an `email` column would break real sign-ups for however long
+  this migration takes to actually land in the SQL Editor (the same
+  DDL-access gap that stalled `0004`/`0005` for hours; see the Supabase
+  blocker history above). The trigger works regardless of what columns the
+  application's own insert sets.
+
+**Blocker: `0007` not live yet**, same recurring DDL-access gap as every
+prior migration in this project (no `SUPABASE_SERVICE_ROLE_KEY`, PAT, or
+CLI session in this workspace). Confirmed directly: `GET
+{url}/rest/v1/profiles?select=id,email&limit=1` returns `400 42703 column
+profiles.email does not exist`. Until it's applied, `/admin/employees` and
+its edit page (both select `email`) fail the same all-or-nothing way
+`leave_requests.review_comment` did before `0005` landed — this is scoped
+to those two pages only; nothing else in `profiles` selects `email`.
+
+**Verification**: `npm run build`/`lint` clean. Full live end-to-end pass
+against the real Supabase project (Playwright, headless Chromium) using
+the durable `hr13.admin@example.com` admin fixture (still holds its role
+from before `0004` closed self-escalation — same reuse pattern as HR-13's
+own final QA pass) plus two fresh throwaway fixtures
+(`hr15qa.employee1@example.com`, `hr15qa.manager1@example.com`). Since
+`0007` isn't live yet, the `email` select/render was temporarily stripped
+from both pages for this pass only and reverted immediately after
+capturing evidence — the committed code targets the real final schema.
+Confirmed live: `/admin` overview renders correct non-zero counts across
+headcount/checked-in-today/currently-checked-in/pending-leave/sites;
+`/admin/employees` lists every profile (25 total, including every prior
+feature's leftover QA fixtures) with correctly resolved manager/site
+names; promoting `hr15qa.manager1` from employee → manager via the edit
+form persists and is reflected both in the list and on that user's own
+`/dashboard` profile view; assigning `hr15qa.employee1` a manager
+(`hr15qa.manager1`) and a site persists and resolves correctly in the
+list; the manager-dropdown correctly excludes a profile from being its own
+manager; a manager and a plain employee are both redirected away from
+`/admin` and `/admin/employees` to `/dashboard`. Screenshots in
+`qa-evidence/hr-15-admin-dashboard/`.
