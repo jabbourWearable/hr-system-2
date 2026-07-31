@@ -11,16 +11,21 @@ export default async function AdminEmployeesPage() {
   await requireRole("admin");
   const supabase = await createClient();
 
-  const [{ data: profiles }, { data: sites }] = await Promise.all([
+  const [{ data: profiles }, { data: sites }, { data: emailRows }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, email, employee_code, role, manager_id, site_id")
+      .select("id, full_name, employee_code, role, manager_id, site_id")
       .order("full_name"),
     supabase.from("sites").select("id, name"),
+    // `email` isn't in the original schema (migration 0007 backfills it via a
+    // DB trigger) — select it separately so a not-yet-applied migration can't
+    // 42703 the whole employee list, only the email column.
+    supabase.from("profiles").select("id, email"),
   ]);
 
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
   const siteNameById = new Map((sites ?? []).map((s) => [s.id, s.name]));
+  const emailById = new Map((emailRows ?? []).map((p) => [p.id, p.email]));
 
   return (
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
@@ -56,7 +61,7 @@ export default async function AdminEmployeesPage() {
               {profiles.map((profile) => (
                 <tr key={profile.id} className="border-t border-border">
                   <td className="px-3 py-2">{profile.full_name}</td>
-                  <td className="px-3 py-2">{profile.email ?? "—"}</td>
+                  <td className="px-3 py-2">{emailById.get(profile.id) ?? "—"}</td>
                   <td className="px-3 py-2">{profile.employee_code ?? "—"}</td>
                   <td className="px-3 py-2 capitalize">{profile.role}</td>
                   <td className="px-3 py-2">

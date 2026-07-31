@@ -16,19 +16,23 @@ export default async function EditEmployeePage({
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, manager_id, site_id")
+    .select("id, full_name, role, manager_id, site_id")
     .eq("id", id)
     .single();
 
   if (!profile) notFound();
 
-  const [{ data: allProfiles }, { data: sites }] = await Promise.all([
+  const [{ data: allProfiles }, { data: sites }, { data: emailRow }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name")
       .neq("id", id)
       .order("full_name"),
     supabase.from("sites").select("id, name").order("name"),
+    // `email` isn't in the original schema (migration 0007 backfills it via a
+    // DB trigger) — select it separately so a not-yet-applied migration can't
+    // 42703 the whole edit page, only the email display.
+    supabase.from("profiles").select("email").eq("id", id).single(),
   ]);
 
   const updateEmployeeWithId = updateEmployeeProfile.bind(null, profile.id);
@@ -39,7 +43,7 @@ export default async function EditEmployeePage({
         <div>
           <h1 className="text-xl font-semibold">Edit {profile.full_name}</h1>
           <p className="text-sm text-foreground-muted">
-            {profile.email ?? "No email on file"}
+            {emailRow?.email ?? "No email on file"}
           </p>
         </div>
         <Link
