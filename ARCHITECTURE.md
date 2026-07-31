@@ -477,6 +477,22 @@ yet covered by HR-27's earlier PASS, which ran before `0005` was live) is
 still unexercised end-to-end against the committed code — worth a follow-up
 pass by whoever owns HR-13 next, but the schema blocker itself is gone.
 
+**Comment-field acceptance criterion verified live 2026-07-31**, closing the
+one gap HR-27 flagged. Reused the durable `hr13.admin@example.com` /
+`hr13.manager@example.com` / `hr13.employee@example.com` fixtures (still
+had their roles from before `0004` closed self-escalation, so no new SQL
+bootstrap was needed). Ran a full Playwright pass against the real,
+unpatched committed code (no local patch this time — the column genuinely
+exists now): employee submits two requests; manager approves one with a
+comment ("Approved - team coverage confirmed for these dates.") — the
+employee's own page renders that exact text in the "Reviewer comment"
+column; admin rejects the other, company-wide, with its own comment
+("Rejected - conflicts with quarter-end close.") — same result. Screenshots
+in `qa-evidence/hr-13-review-comment-verification/`. Combined with HR-27's
+earlier independent PASS on every other acceptance-criterion fragment, all
+of HR-13's acceptance criteria are now verified live against the real
+schema.
+
 ## Attendance history views (HR-12)
 
 Implements spec §5 item 5 / §5.9 (employee sees own check-in/out log,
