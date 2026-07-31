@@ -191,13 +191,28 @@ criteria:
   itself returns `"Only the service_role API key can be used for this
   endpoint"` with this key), and PostgREST has no DDL endpoint for any
   key short of a direct Postgres connection or the Supabase Management
-  API. This doesn't require sharing more secrets: whoever has dashboard
-  access can paste the four migration files (`0000` through `0003`, in
-  order) into the SQL Editor and flip off Authentication → Providers →
-  Email → "Confirm email" directly — no service_role key or DB password
-  needs to change hands for that path. `service_role` is only needed
-  later, for `.env.local`/Vercel (HR-13's admin-bypass insert, HR-17
+  API. `service_role` doesn't help here either — it authenticates
+  PostgREST requests, not DDL or project config, and it's only needed
+  later for `.env.local`/Vercel (HR-13's admin-bypass insert, HR-17
   deploy).
+- **Two ways to actually unblock this, either works:**
+  1. *Manual (no secret changes hands):* whoever has Supabase dashboard
+     access pastes the four migration files (`0000` through `0003`, in
+     order) into SQL Editor → New query → Run, then flips off
+     Authentication → Providers → Email → "Confirm email". About 2
+     minutes total.
+  2. *Agent-executed (needs one more credential):* a Supabase **Personal
+     Access Token** (Dashboard → Account → Access Tokens →
+     "Generate new token" — this is an account-level token, distinct
+     from the anon/service_role project keys already in `.env.local`).
+     With it, an agent can call the Management API directly:
+     `POST https://api.supabase.com/v1/projects/{ref}/database/query`
+     to run each migration file's SQL, and
+     `PATCH https://api.supabase.com/v1/projects/{ref}/config/auth`
+     with `{"mailer_autoconfirm": true}` to disable Confirm email. This
+     token should be treated as sensitive (it's account-wide, not
+     scoped to one project) — pass it as an env var for the run rather
+     than committing it anywhere.
 
 This blocks the *live* parts of this issue's acceptance criteria
 ("migration applied", "email confirmation disabled"); it does not block
