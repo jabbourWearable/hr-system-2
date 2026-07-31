@@ -618,3 +618,87 @@ list; the manager-dropdown correctly excludes a profile from being its own
 manager; a manager and a plain employee are both redirected away from
 `/admin` and `/admin/employees` to `/dashboard`. Screenshots in
 `qa-evidence/hr-15-admin-dashboard/`.
+
+## In-app real-time notifications (HR-14)
+
+Implements spec §5 item 8: a notification list on `/dashboard`, created
+when a leave request's status changes and updated live via Supabase
+Realtime — the explicit MVP replacement for the reference app's push
+notifications (§6 excludes FCM/APNs entirely).
+
+- `src/lib/leave/review.ts` (`applyLeaveDecision`) — after the
+  `leave_requests` status update commits, inserts one `notifications` row
+  for the request's `user_id` (`Your leave request for {start}–{end} was
+  {approved|rejected}.`). The `status = 'pending'` guard already used for
+  the update doubles as the "no notification on a pending→pending no-op"
+  rule — this function only ever runs on a real transition. The insert is
+  best-effort: a failure there doesn't turn an already-successful review
+  into an error response.
+- `src/app/dashboard/notifications-list.tsx` (Client Component) +
+  `notifications-actions.ts` (`markNotificationRead`) — renders the
+  caller's own notifications (newest first, unread bolded) and subscribes
+  to `postgres_changes` INSERT events on `notifications` filtered to
+  `user_id=eq.<self>`; a new row appends to the top of the list with no
+  page reload. Clicking "Mark read" calls the Server Action, which relies
+  on `notifications_update_own` (0002) the same way `attendance-actions.ts`
+  relies on `attendance_update_own`.
+- `supabase/migrations/0006_notifications_insert_reviewer.sql` — adds an
+  INSERT policy so a manager (for their own direct reports, `is_manager_of`)
+  or admin (`is_admin`) can write a notification using their own
+  authenticated session. 0002's original design left this insert to a
+  service-role client instead (see that file's "notifications" section
+  comment) — but `SUPABASE_SERVICE_ROLE_KEY` has been empty in
+  `.env.local` since the HR-9 saga and shows no sign of arriving, so this
+  feature's core acceptance criterion would otherwise depend indefinitely
+  on a credential the project has never obtained. The new policy mirrors
+  the authority a reviewer already has via
+  `leave_requests_update_manager`/`leave_requests_admin_all` — a manager
+  can already change a direct report's leave status, so letting them write
+  that same status change's notification is the same trust boundary, not
+  a new one. `notifications_admin_all` (already live) already covered the
+  admin case without this migration; `0006` only adds the manager path.
+
+**Real Realtime bug found and fixed during live QA** (not an infra
+blocker — a genuine application bug): the browser Supabase client
+(`createBrowserClient`, `@supabase/ssr`) hydrates the session from cookies
+asynchronously. Calling `.channel(...).subscribe()` immediately on mount
+(before that hydration resolves and supabase-js's internal
+`onAuthStateChange` listener calls `realtime.setAuth()`) joins the
+Realtime channel with no JWT — confirmed directly by capturing the
+websocket frames: the `phx_join` payload had no `access_token` field, and
+a REST-inserted row was never delivered even after 40+ seconds, despite
+the server confirming `"Subscribed to PostgreSQL"` (that ack doesn't
+validate RLS — only per-row delivery does, and with no JWT the connection
+evaluates `notifications_select_own`'s `auth.uid()` as null, so no row
+ever matches). Fixed in `notifications-list.tsx` by awaiting
+`supabase.auth.getSession()` and calling `supabase.realtime.setAuth(session
+.access_token)` before `.subscribe()`. Re-captured the same websocket
+frames after the fix: `access_token` present in the join payload, and a
+REST-inserted row arrived as a `postgres_changes` event in well under a
+second. Any future Realtime feature in this codebase should follow the
+same await-session-then-setAuth-then-subscribe order — subscribing first
+looks like it works (no error, "Subscribed" ack) but silently drops every
+event.
+
+**Blocker: `0006` not live yet**, same recurring DDL-access gap as every
+prior migration (no `SUPABASE_SERVICE_ROLE_KEY`, PAT, or CLI session in
+this workspace). Confirmed directly: a manager session (`hr13.manager
+@example.com`, still holds its role from before `0004` closed
+self-escalation) attempting `POST .../rest/v1/notifications` for one of
+their direct reports gets `403 42501` (RLS violation). Until `0006` lands,
+approving/rejecting as a **manager** changes the request's status
+correctly but does not create a notification; approving/rejecting as an
+**admin** already works today without `0006`, since `notifications_admin_all`
+(0002) already grants admins insert regardless of target user.
+
+**Verification**: `npm run build`/`lint` clean. Full live end-to-end pass
+against the real Supabase project (Playwright, headless Chromium) reusing
+the `hr13.*@example.com` fixtures (employee/manager/admin, still hold
+their roles). Employee submitted two pending requests and left `/dashboard`
+open with no further navigation; admin approved one via `/admin/leave` —
+the notification appeared on the employee's already-open dashboard within
+seconds with no reload, and "Mark read" correctly cleared it; manager
+rejected the other via `/dashboard/leave/approvals` — status changed
+correctly but (as expected, `0006` not live) no notification appeared, and
+no false positive was recorded either. Screenshots in
+`qa-evidence/hr-14-notifications/`.
