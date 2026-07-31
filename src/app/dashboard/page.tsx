@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { createClient } from "@/lib/supabase/server";
@@ -53,8 +54,26 @@ export default async function DashboardPage() {
           initialIsCheckedIn={Boolean(openRecord)}
         />
       </section>
-      {/* Attendance history, leave requests, notifications (HR-12..HR-14)
-          build out from here. */}
+      <section className="max-w-sm space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+          Leave
+        </h2>
+        <nav className="flex flex-col gap-1 text-sm">
+          <Link href="/dashboard/leave" className="font-medium text-primary hover:underline">
+            Request leave / view my requests
+          </Link>
+          {user.role === "manager" && (
+            <Link
+              href="/dashboard/leave/approvals"
+              className="font-medium text-primary hover:underline"
+            >
+              Review my team&apos;s leave requests
+            </Link>
+          )}
+        </nav>
+      </section>
+      {/* Attendance history, notifications (HR-12/HR-14) build out from
+          here. */}
     </main>
   );
 }

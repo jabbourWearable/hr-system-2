@@ -383,3 +383,91 @@ Supabase dashboard access must run
 the SQL Editor. That's intentional (matches how every other privileged
 one-off in this project has been done) and is not itself a vulnerability,
 since it requires Supabase dashboard access, not just an anon key.
+
+## Leave request + approval workflow (HR-13)
+
+Implements spec §5 items 6-7 (employee leave requests, manager/admin
+approval). No new tables — `leave_requests` already existed from
+`0001_initial_schema.sql` and its RLS policies (`leave_requests_insert_own`,
+`leave_requests_select_own`, `leave_requests_select_manager`,
+`leave_requests_update_manager`, `leave_requests_admin_all`, all in
+`0002_rls_policies.sql`) already covered every access pattern this feature
+needs — only one schema change and application code were added.
+
+- `supabase/migrations/0005_add_leave_requests_review_comment.sql` — adds
+  `leave_requests.review_comment` (nullable text). Neither the spec's §7
+  data-model sketch nor the original schema had a column for this, but
+  HR-13's acceptance criteria explicitly require approving/rejecting "with
+  an optional comment". No RLS changes needed — the existing update
+  policies already permit updating any column on rows a manager/admin is
+  authorized to touch.
+- `src/lib/leave/review.ts` — `applyLeaveDecision()`, shared by the manager
+  and admin review Server Actions. Uses `.eq("status", "pending")` plus
+  `.select().maybeSingle()` so a stale page re-submitting a decision, or a
+  manager trying to touch a non-report's request, comes back as a clean
+  "not pending / not authorized" error instead of a silent no-op — RLS
+  returns zero matched rows rather than throwing.
+- `src/lib/leave/requester-profiles.ts` — fetches requester profiles by id
+  list and returns a `Map`, rather than a PostgREST embedded select
+  (`leave_requests(...profiles(full_name))`). The hand-written `Database`
+  type has no FK relationship metadata (`Relationships: []` everywhere), so
+  embedded-select typing isn't reliable here; a second simple query
+  (already the pattern in `src/app/dashboard/page.tsx`) sidesteps that.
+- `src/app/dashboard/leave/` — employee-facing page: `LeaveRequestForm`
+  (date range, type, reason) + own request list with a status badge and
+  reviewer comment column.
+- `src/app/dashboard/leave/approvals/` — manager-only (`requireRole
+  ('manager')`) pending list, scoped to direct reports purely by RLS (no
+  extra `manager_id` filter needed in the query).
+- `src/app/admin/leave/` — admin-only (`requireRole('admin')`), same UI
+  pattern but company-wide (RLS's `leave_requests_admin_all` removes the
+  manager scoping). Spec §8 groups "leave approvals" under `/admin`
+  generally, but HR-13's own acceptance criteria call out admin
+  approve/reject explicitly, so a minimal version shipped here rather than
+  deferring the whole capability to HR-15 (admin dashboard).
+- `src/components/leave/review-form.tsx` — one `<form>`, two submit buttons
+  (`name="decision" value="approved"` / `"rejected"`) sharing one comment
+  textarea; native HTML only includes the clicked button's name/value pair
+  in the submitted FormData, so one bound Server Action tells the two
+  decisions apart without extra client state.
+
+**Verification**: `npm run build`/`lint` clean. Full live end-to-end pass
+against the real Supabase project (Playwright, headless Chromium): created
+three fixture accounts (admin/manager/employee, the employee's
+`manager_id` pointing at the manager — set up the same way HR-11's QA
+built its fixtures, via the still-open `profiles_insert_self` role gap
+from the "Security note" above, since `0004` isn't live yet either).
+Confirmed live: employee submits a leave request → appears with a
+"Pending" badge on their own page; manager's `/dashboard/leave/approvals`
+shows only that employee's pending requests (RLS-scoped, not
+application-filtered); manager approves one → it disappears from the
+manager's pending list and the employee's own page shows "Approved";
+admin's `/admin/leave` shows every pending request company-wide, not just
+their own reports'; admin rejects one → same disappearance/status-update
+behavor, `reviewed_by` correctly set to the admin's id regardless of
+`manager_id`. Screenshots in `qa-evidence/hr-13-leave-workflow/`.
+
+**Blocker: `review_comment` column not live yet.** Migration `0005` (like
+`0004` before it) needs the same DDL access this whole project has lacked
+since the HR-9 saga — no `SUPABASE_SERVICE_ROLE_KEY`, no Supabase Personal
+Access Token, no `supabase` CLI session in this workspace. Unlike `0004`
+(a security fix that didn't block HR-11's own acceptance criteria), this
+column is load-bearing for HR-13's approve/reject-with-comment
+requirement: every read of `leave_requests` in the new pages selects
+`review_comment` and every review action's `update()` sets it, so **until
+`0005` is applied, submitting a comment on an approve/reject — or even
+just loading `/dashboard/leave`, `/dashboard/leave/approvals`, or
+`/admin/leave` — will fail with Postgres `42703 column
+"review_comment" does not exist`.**
+
+The live verification above happened via a temporary local patch (comment
+field stripped from the select/update calls, reverted immediately after
+capturing evidence) to confirm the rest of the workflow — submission,
+RLS-scoped visibility, approve/reject, status propagation back to the
+employee — genuinely works end-to-end; that patch is not in the committed
+code. The shipped code targets the real final schema and needs `0005` run
+before it works live. **Unblock, same two paths as `0004`:** (A) paste
+`0004` and `0005` into the Supabase SQL Editor in one trip (2 minutes,
+no new credential), or (B) share a Supabase Personal Access Token so an
+agent can apply both via the Management API
+(`POST /v1/projects/{ref}/database/query`).

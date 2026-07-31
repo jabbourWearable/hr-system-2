@@ -25,9 +25,12 @@ export default async function AdminPage() {
         <Link href="/admin/sites" className="font-medium text-primary hover:underline">
           Work sites
         </Link>
+        <Link href="/admin/leave" className="font-medium text-primary hover:underline">
+          Leave approvals
+        </Link>
       </nav>
-      {/* Employee account management, company-wide attendance & leave
-          overview (HR-15) build out from here. */}
+      {/* Employee account management, company-wide attendance overview
+          (HR-15) build out from here. */}
     </main>
   );
 }

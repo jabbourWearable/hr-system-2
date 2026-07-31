@@ -92,6 +92,7 @@ export type Database = {
           status: LeaveStatus;
           reviewed_by: string | null;
           reviewed_at: string | null;
+          review_comment: string | null;
           created_at: string;
         };
         Insert: {
@@ -104,6 +105,7 @@ export type Database = {
           status?: LeaveStatus;
           reviewed_by?: string | null;
           reviewed_at?: string | null;
+          review_comment?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["leave_requests"]["Insert"]>;
