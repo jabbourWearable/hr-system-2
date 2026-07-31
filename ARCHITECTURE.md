@@ -471,3 +471,58 @@ before it works live. **Unblock, same two paths as `0004`:** (A) paste
 no new credential), or (B) share a Supabase Personal Access Token so an
 agent can apply both via the Management API
 (`POST /v1/projects/{ref}/database/query`).
+
+## Attendance history views (HR-12)
+
+Implements spec §5 item 5 / §5.9 (employee sees own check-in/out log,
+manager sees direct reports, admin sees company-wide). No schema or RLS
+changes — `attendance_select_own`, `attendance_select_manager`, and
+`attendance_admin_all` (all already in `0002_rls_policies.sql`, added
+ahead of time for HR-11's task list Task 13) already cover every access
+pattern this feature needs. Only application code was added.
+
+- `src/app/dashboard/attendance/page.tsx` — any authenticated user's own
+  history (task list Task 12): date, check-in time, check-out time (or
+  "—" for an open shift), site name, newest first.
+- `src/app/dashboard/attendance/team/page.tsx` — manager-only
+  (`requireRole('manager')`) view of direct reports' history, plus
+  `src/app/admin/attendance/page.tsx` — admin-only, company-wide
+  equivalent (task list Task 13). Both add an employee dropdown + date
+  range as narrowing filters on top of the RLS-scoped base query (a
+  manager can only ever narrow *down* from their own reports, never
+  widen access) — filter state lives entirely in the URL query string via
+  a plain `method="get"` form (`src/components/attendance/
+  attendance-filters.tsx`, shared between the two pages since they're
+  identical except for `action` and the employee list), so no client JS
+  is needed.
+- `src/lib/attendance/employee-profiles.ts`, `site-names.ts` — id → name
+  lookups by id list, same two-query-instead-of-embedded-select pattern
+  as `src/lib/leave/requester-profiles.ts` (kept as attendance's own copy
+  rather than importing across features, since the two are independent
+  and happen to need the same small query shape).
+- `src/lib/attendance/date-range.ts` — `nextDayExclusive()`. A "to" date
+  filter needs to include the whole day, but `check_in_at` is a
+  `timestamptz`; comparing it against the bare date string would only
+  match midnight, so `to` is converted to the exclusive start of the
+  following day (`.lt("check_in_at", nextDayExclusive(to))`) instead.
+
+**Verification**: `npm run build`/`lint` clean. Full live end-to-end pass
+against the real Supabase project (Playwright, headless Chromium): built
+five fixture accounts (admin, manager, two of the manager's direct
+reports, one unmanaged employee — same still-open `profiles_insert_self`
+role gap used for HR-11/HR-13's fixtures, since `0004` isn't live yet)
+and inserted `attendance` rows directly via REST across several dates,
+including one open (no `check_out_at`) shift. Confirmed live: the
+employee's own page shows only their 3 rows with the open shift rendered
+as "—"; the manager's team page shows exactly their 2 reports' 4 rows and
+excludes the unmanaged employee, and its employee filter dropdown lists
+only direct reports; selecting one employee narrows the table to just
+their rows; the manager is redirected away from `/admin/attendance`
+(`requireRole('admin')`) and a plain employee is redirected away from
+both `/dashboard/attendance/team` and `/admin/attendance`; the admin's
+company page shows every row including the unmanaged employee and
+pre-existing rows left over from HR-11/HR-23's own QA fixtures; a date
+range narrowed to "today" returned exactly the 3 rows actually dated
+today (verified independently via a direct REST query first, since the
+project already had two same-day leftover rows from prior QA). Screenshots
+in `qa-evidence/hr-12-attendance-history/`.

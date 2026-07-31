@@ -53,6 +53,19 @@ export default async function DashboardPage() {
           siteName={site?.name ?? null}
           initialIsCheckedIn={Boolean(openRecord)}
         />
+        <nav className="flex flex-col gap-1 pt-1">
+          <Link href="/dashboard/attendance" className="font-medium text-primary hover:underline">
+            My attendance history
+          </Link>
+          {user.role === "manager" && (
+            <Link
+              href="/dashboard/attendance/team"
+              className="font-medium text-primary hover:underline"
+            >
+              My team&apos;s attendance history
+            </Link>
+          )}
+        </nav>
       </section>
       <section className="max-w-sm space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
@@ -72,8 +85,7 @@ export default async function DashboardPage() {
           )}
         </nav>
       </section>
-      {/* Attendance history, notifications (HR-12/HR-14) build out from
-          here. */}
+      {/* Notifications (HR-14) build out from here. */}
     </main>
   );
 }
