@@ -367,14 +367,15 @@ never sets `role`) is unaffected. Promoting someone to `manager`/`admin`
 still only happens via `profiles_update_admin`, i.e. an existing admin
 using the Task 19/HR-15 admin UI.
 
-**Not yet applied to the live project** — same DDL-application blocker
-documented throughout this file (no `service_role` key, no Supabase
-Personal Access Token): needs a human to paste `0004`'s SQL into the
-Supabase SQL Editor, same 2-minute manual step used for `0000`–`0003`.
-This does **not** block HR-11 itself (HR-11's own acceptance criteria don't
-touch `profiles` RLS), so it's tracked as its own follow-up issue rather
-than gating HR-11's completion — see that issue for the "who/what" to
-unblock it.
+**Applied and verified live 2026-07-31** (HR-24) — a human pasted `0004`'s
+SQL into the Supabase SQL Editor. Confirmed directly rather than trusting
+the report: signed up a fresh throwaway account and re-ran the exact
+exploit (`POST /rest/v1/profiles` with `role: "admin"`, anon key + that
+account's own session) — now correctly rejected with `403 42501 new row
+violates row-level security policy for table "profiles"`. Also confirmed
+the legitimate path is unaffected: the same account's self-insert with no
+`role` field (matching the app's real `/signup` action) still succeeds
+(`201`, defaults to `role: "employee"`).
 
 **One remaining gap this fix doesn't close**: bootstrapping the very first
 admin account still has no self-service path by design — someone with
@@ -465,12 +466,16 @@ field stripped from the select/update calls, reverted immediately after
 capturing evidence) to confirm the rest of the workflow — submission,
 RLS-scoped visibility, approve/reject, status propagation back to the
 employee — genuinely works end-to-end; that patch is not in the committed
-code. The shipped code targets the real final schema and needs `0005` run
-before it works live. **Unblock, same two paths as `0004`:** (A) paste
-`0004` and `0005` into the Supabase SQL Editor in one trip (2 minutes,
-no new credential), or (B) share a Supabase Personal Access Token so an
-agent can apply both via the Management API
-(`POST /v1/projects/{ref}/database/query`).
+code. The shipped code targets the real final schema and needed `0005` run
+before it works live.
+
+**`0005` applied and verified live 2026-07-31** (confirmed independently
+while verifying HR-24's `0004`, same SQL Editor trip): `GET
+/rest/v1/leave_requests?select=id,review_comment&limit=1` now returns
+`200 []` instead of `42703`. The comment-field acceptance criterion (not
+yet covered by HR-27's earlier PASS, which ran before `0005` was live) is
+still unexercised end-to-end against the committed code — worth a follow-up
+pass by whoever owns HR-13 next, but the schema blocker itself is gone.
 
 ## Attendance history views (HR-12)
 
