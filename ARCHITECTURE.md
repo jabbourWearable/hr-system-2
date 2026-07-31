@@ -696,25 +696,48 @@ same await-session-then-setAuth-then-subscribe order — subscribing first
 looks like it works (no error, "Subscribed" ack) but silently drops every
 event.
 
-**Blocker: `0006` not live yet**, same recurring DDL-access gap as every
-prior migration (no `SUPABASE_SERVICE_ROLE_KEY`, PAT, or CLI session in
-this workspace). Confirmed directly: a manager session (`hr13.manager
-@example.com`, still holds its role from before `0004` closed
-self-escalation) attempting `POST .../rest/v1/notifications` for one of
-their direct reports gets `403 42501` (RLS violation). Until `0006` lands,
-approving/rejecting as a **manager** changes the request's status
-correctly but does not create a notification; approving/rejecting as an
-**admin** already works today without `0006`, since `notifications_admin_all`
-(0002) already grants admins insert regardless of target user.
+**Blocker `0006` — RESOLVED 2026-07-31.** User supplied the real DB password
+on HR-14's comment thread; connecting directly via `psql` (see `DATABASE_URL`
+in `.env.local`) confirmed `notifications_insert_reviewer` is live with the
+correct `with_check` clause. A manager-fixture insert for a direct report
+now returns `201` instead of `403 42501`.
 
-**Verification**: `npm run build`/`lint` clean. Full live end-to-end pass
-against the real Supabase project (Playwright, headless Chromium) reusing
-the `hr13.*@example.com` fixtures (employee/manager/admin, still hold
-their roles). Employee submitted two pending requests and left `/dashboard`
-open with no further navigation; admin approved one via `/admin/leave` —
-the notification appeared on the employee's already-open dashboard within
-seconds with no reload, and "Mark read" correctly cleared it; manager
-rejected the other via `/dashboard/leave/approvals` — status changed
-correctly but (as expected, `0006` not live) no notification appeared, and
-no false positive was recorded either. Screenshots in
-`qa-evidence/hr-14-notifications/`.
+One debugging subtlety worth recording: the very first live re-probe after
+getting DB access *still* showed `403 42501` for the manager insert, which
+looked like the SQL Editor paste hadn't actually taken (the established
+false-signal pattern throughout this project's history). It hadn't — the
+probe used `Prefer: return=representation` (Supabase's `.insert().select()`),
+and Postgres RLS separately enforces the `notifications_select_own` /
+`notifications_admin_all` SELECT policies against the `RETURNING` row, which
+correctly reject a manager reading a row that belongs to someone else. The
+real app code (`applyLeaveDecision` in `src/lib/leave/review.ts`) calls plain
+`.insert({...})` with no `.select()`, so it sends `Prefer: return=minimal` and
+never hits that check. Confirmed directly (same session, same values) that
+the identical insert succeeds without `RETURNING` and fails only with it. Any
+future probe of an RLS-gated insert in this codebase should match the real
+call's `Prefer`/`.select()` shape exactly, not just its `WITH CHECK`-relevant
+values — the two can diverge like this whenever the actor isn't allowed to
+read back rows it's permitted to write.
+
+**Verification**: `npm run build`/`lint` clean. Two full live end-to-end
+passes against the real Supabase project (Playwright, headless Chromium),
+reusing the `hr13.*@example.com` fixtures (employee/manager/admin, still
+hold their roles):
+
+- Admin path (`qa-evidence/hr-14-notifications/`): employee submitted two
+  pending requests and left `/dashboard` open with no further navigation;
+  admin approved one via `/admin/leave` — the notification appeared on the
+  employee's already-open dashboard within seconds with no reload, and "Mark
+  read" correctly cleared it. (At the time, manager-rejecting the other
+  request correctly changed status but produced no notification, since
+  `0006` wasn't live yet — expected, not a regression.)
+- Manager path (`qa-evidence/hr-14-manager-notification-live/`, after `0006`
+  landed): employee submitted a fresh request and left `/dashboard` open;
+  manager approved it with a review comment via
+  `/dashboard/leave/approvals` in a separate browser session — the
+  notification appeared on the employee's already-open dashboard with no
+  reload, and "Mark read" correctly cleared it (unread count dropped,
+  row un-bolded).
+
+Both the admin and manager review paths now create a real-time, mark-readable
+notification, covering all three of HR-14's acceptance criteria end to end.
