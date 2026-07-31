@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/session";
 import { LogoutButton } from "@/components/auth/logout-button";
 
@@ -20,7 +21,12 @@ export default async function AdminPage() {
         </div>
         <LogoutButton />
       </div>
-      {/* Employee/site management, company-wide attendance & leave
+      <nav className="flex gap-4 text-sm">
+        <Link href="/admin/sites" className="font-medium text-primary hover:underline">
+          Work sites
+        </Link>
+      </nav>
+      {/* Employee account management, company-wide attendance & leave
           overview (HR-15) build out from here. */}
     </main>
   );

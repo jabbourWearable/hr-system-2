@@ -51,6 +51,7 @@ supabase/
     0001_initial_schema.sql  # profiles, sites, attendance, leave_requests, notifications
     0002_rls_policies.sql    # RLS policies + is_admin()/is_manager_of() helper functions
     0003_realtime.sql        # adds notifications to the supabase_realtime publication
+    0004_fix_profiles_self_insert_privilege_escalation.sql  # closes a role self-escalation RLS gap (HR-11)
 .env.local.example
 ```
 
@@ -293,3 +294,92 @@ requirement:
   role='employee'" acceptance criterion. See the blocker section above —
   the live project rejects all email/password auth right now
   (`email_provider_disabled`), independent of this code.
+
+## Work sites + geo-attendance (HR-11)
+
+Implements task list Tasks 9–11 (work site CRUD, check-in, check-out).
+No new tables — `sites`/`attendance` already existed from
+`0001_initial_schema.sql`, and their RLS policies (`sites_write_admin`,
+`attendance_insert_own`/`attendance_update_own`) already covered this
+feature; only application code was added.
+
+- `src/lib/geo/haversine.ts` — pure haversine distance function (meters),
+  shared by check-in and check-out.
+- `src/app/dashboard/attendance-actions.ts` — `checkIn`/`checkOut` Server
+  Actions. Distance/radius validation runs here (server-side, using the
+  request's own RLS-scoped client — not the admin client), so it can't be
+  bypassed by editing client code, per task list Task 10's explicit
+  requirement. `checkOut` validates against the site the employee actually
+  checked into (`attendance.site_id` on the open record), not their
+  *current* `profiles.site_id`, so an admin reassigning someone's site
+  mid-shift can't strand an open check-in.
+- `src/app/dashboard/check-in-out.tsx` — Client Component. Calls
+  `navigator.geolocation.getCurrentPosition`, then invokes the Server
+  Action directly (not bound to a `<form>`) inside `startTransition`, per
+  the Next.js Server Actions guide's "event handler ... wrapped in
+  startTransition" pattern — geolocation must resolve asynchronously
+  before the action can be called, which a plain form submission can't
+  express.
+- `src/app/admin/sites/` — `page.tsx` (list + create), `[id]/edit/page.tsx`
+  (edit), `actions.ts` (`createSite`/`updateSite`/`deleteSite`),
+  `site-form.tsx` (shared form, `defaultValues` omitted on create so
+  `radius_meters` has no pre-filled value — spec §11 Q5), all gated by
+  `requireRole('admin')`. Delete catches Postgres `23503`
+  (foreign_key_violation) — `attendance.site_id` is `on delete restrict` —
+  and shows a clear "reassign or remove those records first" message
+  instead of a raw 500; `profiles.site_id` is `on delete set null`, so an
+  employee's site assignment silently clears on site delete rather than
+  erroring (accepted behavior, documented in the migration's own comments).
+
+**Verification**: `npm run build`/`lint` clean. Full live end-to-end pass
+against the real Supabase project (Playwright, headless Chromium, geolocation
+mocked via `browserContext.setGeolocation`/the `geolocation` context option):
+admin creates a site through `/admin/sites`, an employee is assigned to it
+(via a direct admin-token REST call — the actual UI for this is Task 19/
+HR-15, not yet built), then as that employee: check-in from ~13.4km away is
+rejected with the exact distance/radius in the error and creates no row;
+check-in from the site's own coordinates succeeds and flips the button to
+"Check Out"; deleting a site with an attendance row against it is blocked
+with the friendly FK message instead of a 500; deleting an unused site
+succeeds. Screenshots in `qa-evidence/hr-11-geo-attendance/`. Left in the
+live project as durable fixtures (consistent with HR-10 QA leaving its own
+`QA Test User` behind): one test admin account, one test employee assigned
+to `HR-11 QA Site`, and that site's one attendance row (needed for the
+delete-blocked screenshot to make sense).
+
+## Security note: profiles self-insert role escalation — found + fixed during HR-11
+
+While creating a test admin account for HR-11's own QA (no `service_role`
+key or SQL Editor access available, same as every prior blocker in this
+file), discovered that `0002_rls_policies.sql`'s `profiles_insert_self`
+policy only checks `id = auth.uid()` — it does not restrict `role`. Any
+authenticated user (i.e. anyone who has ever signed up, using nothing but
+the public anon key) can `POST /rest/v1/profiles` with `role: "admin"` for
+their own row and grant themselves full admin access, bypassing the app's
+own `/signup` action (which never sends `role`) entirely. Confirmed by
+reproducing it directly against the live project.
+
+**Fix**: `supabase/migrations/0004_fix_profiles_self_insert_privilege_escalation.sql`
+tightens the policy to `with check (id = auth.uid() and role = 'employee')`
+— a self-insert can only ever create an `employee` row; `role` defaults to
+`'employee'` at the column level so the app's existing signup insert (which
+never sets `role`) is unaffected. Promoting someone to `manager`/`admin`
+still only happens via `profiles_update_admin`, i.e. an existing admin
+using the Task 19/HR-15 admin UI.
+
+**Not yet applied to the live project** — same DDL-application blocker
+documented throughout this file (no `service_role` key, no Supabase
+Personal Access Token): needs a human to paste `0004`'s SQL into the
+Supabase SQL Editor, same 2-minute manual step used for `0000`–`0003`.
+This does **not** block HR-11 itself (HR-11's own acceptance criteria don't
+touch `profiles` RLS), so it's tracked as its own follow-up issue rather
+than gating HR-11's completion — see that issue for the "who/what" to
+unblock it.
+
+**One remaining gap this fix doesn't close**: bootstrapping the very first
+admin account still has no self-service path by design — someone with
+Supabase dashboard access must run
+`update public.profiles set role = 'admin' where id = '<uuid>'` once via
+the SQL Editor. That's intentional (matches how every other privileged
+one-off in this project has been done) and is not itself a vulnerability,
+since it requires Supabase dashboard access, not just an anon key.

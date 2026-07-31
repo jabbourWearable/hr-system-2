@@ -1,5 +1,7 @@
 import { requireUser } from "@/lib/auth/session";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { createClient } from "@/lib/supabase/server";
+import { CheckInOut } from "./check-in-out";
 
 // Reference implementation of the auth-guard pattern: any authenticated
 // user (employee/manager/admin) may reach /dashboard. Future nested routes
@@ -8,6 +10,19 @@ import { LogoutButton } from "@/components/auth/logout-button";
 // layout for the auth check.
 export default async function DashboardPage() {
   const user = await requireUser();
+  const supabase = await createClient();
+
+  const [{ data: site }, { data: openRecord }] = await Promise.all([
+    user.siteId
+      ? supabase.from("sites").select("name").eq("id", user.siteId).single()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("attendance")
+      .select("id")
+      .eq("user_id", user.id)
+      .is("check_out_at", null)
+      .maybeSingle(),
+  ]);
 
   return (
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
@@ -28,8 +43,18 @@ export default async function DashboardPage() {
         <dt className="text-foreground-muted">Site</dt>
         <dd>{user.siteId ?? "Not assigned yet"}</dd>
       </dl>
-      {/* Check-in/out, attendance history, leave requests, notifications
-          (HR-11..HR-14) build out from here. */}
+      <section className="max-w-sm space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+          Attendance
+        </h2>
+        <CheckInOut
+          hasSite={Boolean(user.siteId)}
+          siteName={site?.name ?? null}
+          initialIsCheckedIn={Boolean(openRecord)}
+        />
+      </section>
+      {/* Attendance history, leave requests, notifications (HR-12..HR-14)
+          build out from here. */}
     </main>
   );
 }
