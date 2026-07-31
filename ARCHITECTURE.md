@@ -205,9 +205,12 @@ HR-10 onward's *code* work, which only needs the three env vars to exist
 locally once someone with Supabase access completes the checklist above.
 
 Separately, `git push` to `origin` (github.com/jabbourWearable/hr-system-2)
-still fails with 403 for this workspace's git credentials — a pre-existing,
-already-tracked blocker (see prior comments on this project) that affects
-eventual Vercel deployment (HR-17), not this issue's local work.
+previously 403'd for this workspace's git credentials; resolved by
+switching the active `gh` account to `jabbourWearable`
+(`gh auth switch --hostname github.com --user jabbourWearable &&
+gh auth setup-git`). All commits through `a83560c` (including
+`0000_reset_legacy_dating_app_schema.sql`) are pushed and visible on
+`origin/main`.
 
 ## Theming
 
