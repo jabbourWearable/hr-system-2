@@ -619,6 +619,22 @@ manager; a manager and a plain employee are both redirected away from
 `/admin` and `/admin/employees` to `/dashboard`. Screenshots in
 `qa-evidence/hr-15-admin-dashboard/`.
 
+**Fix: decoupled `email` from the required select (HR-38 QA follow-up).**
+Both pages originally requested `email` in the same `select()` as
+`role`/`manager_id`/`site_id` — PostgREST fails the *entire* query on one
+missing column, so as long as `0007` stays unapplied, `/admin/employees`
+silently rendered "No employee accounts yet" and the edit page 404d for
+every profile, exactly like `leave_requests.review_comment` broke the whole
+approve/reject flow before `0005` landed. Since `email` isn't one of HR-15's
+acceptance criteria (just a display extra Task 19 asked for), it's now
+fetched in its own best-effort query per page; a missing column degrades to
+"—" / "No email on file" instead of breaking the page. Re-verified live
+against the real (still-unmigrated) Supabase project with the durable
+`hr13.admin@example.com` fixture: `/admin/employees` lists all 28 profiles
+with role/manager/site intact, and the edit page loads and is editable —
+both previously broken. No `git checkout --` patch-and-revert needed this
+time since the fix is the permanent code path, not a test-only workaround.
+
 ## In-app real-time notifications (HR-14)
 
 Implements spec §5 item 8: a notification list on `/dashboard`, created
