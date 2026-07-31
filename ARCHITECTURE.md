@@ -120,49 +120,37 @@ comments. Highlights:
 
 ## Supabase project setup checklist
 
-**Partially done as of 2026-07-31.** `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` were shared on this issue and are now in
-`.env.local` (gitignored, not committed). Read-only checks against the
-live project's REST/Auth endpoints (no writes made) found:
+**Done as of 2026-07-31.** `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` are in `.env.local` (gitignored, not
+committed). The project owner ran migrations `0000`–`0003` through the
+SQL Editor and disabled Confirm Email. Re-verified read-only against the
+live project's REST/Auth endpoints:
 
 - The project (`xrbdqazyhbjmwhilfmkj`) is live and reachable.
-- `sites`, `attendance`, `leave_requests`, `notifications` do **not**
-  exist yet — our migration hasn't been run against this project.
-- Six legacy tables exist: `profiles`, `likes`, `matches`, `messages`,
-  `blocks`, `reports` — a full dating-app schema (confirmed by the project
-  owner on this issue, 2026-07-31: "This db was used before and its used
-  for dating app I want from you to clear this db and create the new
-  migration"). Every other guessed table name 404'd, so this is the
-  complete legacy schema.
-- `GET /auth/v1/settings` shows `"mailer_autoconfirm": false` — "Confirm
-  email" is still **enabled**; the project owner has said they'll disable
-  it themselves.
+- `sites`, `attendance`, `leave_requests`, `notifications` all exist and
+  are queryable (`200` from PostgREST).
+- All six legacy dating-app tables (`profiles`'s old shape, `likes`,
+  `matches`, `messages`, `blocks`, `reports`) are gone —
+  `0000_reset_legacy_dating_app_schema.sql` ran; `profiles` now has our
+  schema (`role`, `manager_id`, `site_id` columns query cleanly).
+- `GET /auth/v1/settings` shows `"mailer_autoconfirm": true` — "Confirm
+  email" is **disabled**, as required by spec §2/§9.
 
-**Project identity is now confirmed** (was previously the open blocker):
-this project is dedicated to the HR system going forward, and the old
-dating-app tables are junk, safe to drop. `0000_reset_legacy_dating_app_schema.sql`
-does that drop. Remaining steps, in order:
+Remaining steps, in order:
 
 1. ~~Create a Supabase project~~ — done.
-2. ~~Confirm project identity~~ — done (see above).
-3. Paste `supabase/migrations/0000_reset_legacy_dating_app_schema.sql`,
-   then `0001_initial_schema.sql`, `0002_rls_policies.sql`, and
-   `0003_realtime.sql`, **in that order**, into the SQL Editor (Supabase
-   dashboard → SQL Editor → New query → Run). Anon key can't execute DDL
-   (see Blocker below), so this needs someone with dashboard access — no
-   new secret has to change hands for it.
-4. Authentication → Providers → Email: leave enabled, leave all other
-   providers off. Authentication → Settings (or Providers → Email, "Confirm
-   email"): **disable "Confirm email"** — mandatory per spec §2/§9, so a
-   signed-up user can log in immediately with no verification link. (Owner
-   said they'll do this step themselves.)
+2. ~~Confirm project identity~~ — done.
+3. ~~Run migrations `0000`–`0003` in the SQL Editor~~ — done, verified above.
+4. ~~Disable "Confirm email"~~ — done, verified above.
 5. Project Settings → API: copy the `service_role` key into `.env.local`
    (URL/anon key already there) and all three vars into the Vercel
-   project's environment variables for deployment.
+   project's environment variables for deployment. **Still outstanding** —
+   not required for HR-9/HR-10, but needed before HR-13 (admin-side
+   notification insert) and HR-17 (Vercel deploy).
 6. Realtime: migration `0003_realtime.sql` already adds `notifications` to
    the `supabase_realtime` publication; no separate dashboard toggle
-   should be needed, but verify under Database → Replication after running
-   the migrations.
+   should be needed, but worth a spot-check under Database → Replication
+   whenever HR-14 (notifications) is implemented.
 
 ### Env vars (spec §9)
 
@@ -176,48 +164,21 @@ Set all three in Vercel (Project Settings → Environment Variables) before
 deploying (HR-17). Vercel serves over HTTPS by default, which the
 Geolocation API (HR-11's check-in/out) requires.
 
-## Blocker: live Supabase provisioning
+## Blocker: live Supabase provisioning — RESOLVED 2026-07-31
 
-URL + anon key are available (see checklist above). Project identity is
-now confirmed (2026-07-31, this issue): this project is dedicated to the
-HR system, and its pre-existing dating-app tables are junk, safe to drop.
-The reset migration for that (`0000_reset_legacy_dating_app_schema.sql`)
-is written. One thing still blocks this issue's *live* acceptance
-criteria:
+URL + anon key are available (see checklist above). Project identity was
+confirmed (2026-07-31, this issue): the project is dedicated to the HR
+system, and its pre-existing dating-app tables were junk, safe to drop.
+The project owner ran migrations `0000`–`0003` via the SQL Editor and
+disabled Confirm Email themselves (the manual, no-new-credential path).
+Verified read-only via REST/Auth endpoints: all four new tables exist,
+all six legacy tables are gone, `profiles` has the new column shape, and
+`mailer_autoconfirm` is `true`. This issue's live acceptance criteria are
+now fully met.
 
-- **No credential here can execute SQL or toggle Auth config.** The anon
-  key can only do row-level REST reads/writes through PostgREST — it
-  can't run DDL (confirmed: `GET /rest/v1/` root/schema introspection
-  itself returns `"Only the service_role API key can be used for this
-  endpoint"` with this key), and PostgREST has no DDL endpoint for any
-  key short of a direct Postgres connection or the Supabase Management
-  API. `service_role` doesn't help here either — it authenticates
-  PostgREST requests, not DDL or project config, and it's only needed
-  later for `.env.local`/Vercel (HR-13's admin-bypass insert, HR-17
-  deploy).
-- **Two ways to actually unblock this, either works:**
-  1. *Manual (no secret changes hands):* whoever has Supabase dashboard
-     access pastes the four migration files (`0000` through `0003`, in
-     order) into SQL Editor → New query → Run, then flips off
-     Authentication → Providers → Email → "Confirm email". About 2
-     minutes total.
-  2. *Agent-executed (needs one more credential):* a Supabase **Personal
-     Access Token** (Dashboard → Account → Access Tokens →
-     "Generate new token" — this is an account-level token, distinct
-     from the anon/service_role project keys already in `.env.local`).
-     With it, an agent can call the Management API directly:
-     `POST https://api.supabase.com/v1/projects/{ref}/database/query`
-     to run each migration file's SQL, and
-     `PATCH https://api.supabase.com/v1/projects/{ref}/config/auth`
-     with `{"mailer_autoconfirm": true}` to disable Confirm email. This
-     token should be treated as sensitive (it's account-wide, not
-     scoped to one project) — pass it as an env var for the run rather
-     than committing it anywhere.
-
-This blocks the *live* parts of this issue's acceptance criteria
-("migration applied", "email confirmation disabled"); it does not block
-HR-10 onward's *code* work, which only needs the three env vars to exist
-locally once someone with Supabase access completes the checklist above.
+The only remaining item is the `service_role` key (still blank in
+`.env.local`), needed for HR-13's admin-bypass notification insert and
+HR-17's Vercel deploy — not required for HR-9 or HR-10.
 
 Separately, `git push` to `origin` (github.com/jabbourWearable/hr-system-2)
 previously 403'd for this workspace's git credentials; resolved by
@@ -247,7 +208,14 @@ requirement:
 
 - `npm run build` passes (typecheck + lint + production build) against
   the scaffold, client helpers, guard pages, and theme system above.
-- No live Supabase project exists yet, so the guard pages
-  (`/dashboard`, `/admin`) have not been exercised against a real session
-  — that's covered by HR-10's evidence-collection QA once sign-up/login
-  are wired up and a live project's env vars are available.
+- Guard redirects (`/dashboard`, `/admin` → `/login` when unauthenticated)
+  were smoke-tested against a locally running dev server.
+- Live Supabase project verified read-only (anon key, no writes): `sites`,
+  `attendance`, `leave_requests`, `notifications` all return `200`; the
+  six legacy dating-app tables (`likes`, `matches`, `messages`, `blocks`,
+  `reports`, old `profiles` shape) are gone; `profiles` now has
+  `role`/`manager_id`/`site_id`; `GET /auth/v1/settings` confirms
+  `mailer_autoconfirm: true`.
+- Not yet exercised: an actual signed-up user hitting `/dashboard`/`/admin`
+  with a real session (no sign-up/login server action exists yet — that's
+  HR-10's job, plus its own evidence-collection QA once wired up).
