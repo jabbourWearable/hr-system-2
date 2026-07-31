@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/session";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { createClient } from "@/lib/supabase/server";
 import { CheckInOut } from "./check-in-out";
+import { NotificationsList } from "./notifications-list";
 
 // Reference implementation of the auth-guard pattern: any authenticated
 // user (employee/manager/admin) may reach /dashboard. Future nested routes
@@ -13,7 +14,7 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = await createClient();
 
-  const [{ data: site }, { data: openRecord }] = await Promise.all([
+  const [{ data: site }, { data: openRecord }, { data: notifications }] = await Promise.all([
     user.siteId
       ? supabase.from("sites").select("name").eq("id", user.siteId).single()
       : Promise.resolve({ data: null }),
@@ -23,6 +24,12 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .is("check_out_at", null)
       .maybeSingle(),
+    supabase
+      .from("notifications")
+      .select("id, message, is_read, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   return (
@@ -85,7 +92,7 @@ export default async function DashboardPage() {
           )}
         </nav>
       </section>
-      {/* Notifications (HR-14) build out from here. */}
+      <NotificationsList userId={user.id} initialNotifications={notifications ?? []} />
     </main>
   );
 }
