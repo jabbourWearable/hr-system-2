@@ -16,6 +16,24 @@ type Props = {
   initialNotifications: NotificationRow[];
 };
 
+// This text is rendered on the server (Vercel, UTC) and again during client
+// hydration (user's locale/timezone), so it must be byte-identical in both —
+// a bare toLocaleString() differs per environment and logs a React #418
+// hydration error on every row (HR-82). Explicit locale + UTC pins the
+// output; h23 avoids the AM/PM separator, which varies across ICU versions.
+function formatTimestamp(iso: string) {
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: "UTC",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZoneName: "short",
+  });
+}
+
 // Spec §5 item 8 / HR-14: in-app notification list, updated live via
 // Supabase Realtime — no push/FCM/APNs (§6). RLS (notifications_select_own,
 // 0002_rls_policies.sql) already scopes Postgres Changes events to the
@@ -100,7 +118,7 @@ export function NotificationsList({ userId, initialNotifications }: Props) {
                   {n.message}
                 </p>
                 <p className="font-mono text-xs text-ash">
-                  {new Date(n.created_at).toLocaleString()}
+                  {formatTimestamp(n.created_at)}
                 </p>
               </div>
               {!n.is_read && (
