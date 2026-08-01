@@ -790,3 +790,52 @@ against the actual deployed URL (not localhost):
 
 Screenshots in `qa-evidence/hr-17-vercel-deploy/` (login, dashboard-after-login,
 signup, dashboard-after-signup-with-no-confirmation-step).
+
+## Leftover legacy `auth.users` rows blocked real sign-ups (HR-59)
+
+A real user hit "User already registered" signing up with a brand-new-to-
+this-app email (`jabbour.d@wearabledevices.co.il`) that had never gone
+through `/signup`'s own `profiles` insert.
+
+Root cause: `0000_reset_legacy_dating_app_schema.sql` (HR-9) dropped the
+_public_ schema tables from this Supabase project's previous life as a
+dating app, but `auth.users` lives in a separate schema Supabase owns and
+that migration never touched it. Four rows from before the HR-9 reset
+survived: three real pre-existing dating-app accounts
+(`jabbour.d@wearabledevices.co.il`, `jaboordandan13@gmail.com`,
+`jaboordandan14@gmail.com`) plus one QA artifact
+(`hr23-qa-employee-77102@example.com`) created directly against the Auth API
+during HR-23 testing rather than through the app's own signup form. None had
+a `full_name` in `raw_user_meta_data` (the app's signup always sets one) and
+none had a matching `profiles` row — confirmed via direct query
+(`DATABASE_URL`) that these were exactly the only 4 orphans out of 44
+`auth.users` rows, everything else paired 1:1 with a `profiles` row. Since
+`auth.users` is project-wide, not scoped to the current app's schema,
+Supabase correctly reported these emails as already registered — the old
+app's leftover identities were shadowing the new one's signups.
+
+Fix: deleted the 4 orphaned rows directly (`DELETE FROM auth.users WHERE
+id IN (...)`, via `DATABASE_URL`; no `SUPABASE_SERVICE_ROLE_KEY` is
+configured in this workspace so the Admin API's `deleteUser` wasn't
+available). Confirmed first that every FK referencing `auth.users.id`
+(`identities`, `sessions`, `mfa_factors`, `one_time_tokens`,
+`oauth_authorizations`, `oauth_consents`, `webauthn_credentials`,
+`webauthn_challenges`, `public.profiles`) is `ON DELETE CASCADE`
+(`pg_constraint.confdeltype = 'c'`), so a single delete against `users`
+cleans up every dependent row safely. This is a data cleanup, not a code
+bug — the two-step signup (`auth.signUp` then `profiles.insert`) has never
+actually orphaned an account when driven through the app's own `/signup`
+form; all 44 real signups paired correctly.
+
+**Verification**: re-queried `auth.users` after the delete — 0 orphans
+remained (was 4), and `count(*) where email = 'jabbour.d@wearabledevices.co.il'`
+returned 0, confirming the email is free for a real sign-up. Also called
+`POST /auth/v1/signup` directly (anon key) for a disposable
+`hr59.verify.<timestamp>@example.com` address to confirm the Auth API itself
+accepts fresh signups post-cleanup (HTTP 200) — then deleted that throwaway
+row afterward so it doesn't linger as a new orphan. (An initial verification
+attempt mistakenly POSTed a real signup call for
+`jabbour.d@wearabledevices.co.il` itself with a placeholder password instead
+of only checking availability — caught immediately and deleted before doing
+anything else, so the email was left free rather than pre-registered with a
+password the actual user wouldn't know.)
