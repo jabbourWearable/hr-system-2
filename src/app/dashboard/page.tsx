@@ -72,7 +72,17 @@ export default async function DashboardPage() {
   const profileFacts = [
     { label: "Role", value: user.role, mono: false, capitalize: true },
     { label: "Employee code", value: user.employeeCode ?? "Not assigned yet", mono: true },
-    { label: "Manager", value: user.managerId ?? "Not assigned yet", mono: true },
+    // Resolve the manager's UUID to their name via the profiles map already
+    // loaded above (no extra query) — showing the raw manager_id UUID here
+    // was a leftover HR-75 caught in the prod hardening sweep. Falls back to
+    // "Not assigned yet" if unset or (RLS-wise, shouldn't happen) unresolved.
+    {
+      label: "Manager",
+      value: user.managerId
+        ? (nameById.get(user.managerId) ?? "Not assigned yet")
+        : "Not assigned yet",
+      mono: false,
+    },
     { label: "Site", value: site?.name ?? user.siteId ?? "Not assigned yet", mono: false },
   ];
 

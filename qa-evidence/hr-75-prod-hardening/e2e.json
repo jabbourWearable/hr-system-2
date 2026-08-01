@@ -1,0 +1,168 @@
+{
+  "base": "https://hr-system-2-iota.vercel.app",
+  "stamp": "1785594115",
+  "pass": 32,
+  "fail": 0,
+  "results": [
+    {
+      "step": "signup/form-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "signup/create-and-auth",
+      "ok": true,
+      "detail": "hr75.signup.1785594115@example.com -> /dashboard"
+    },
+    {
+      "step": "signup/dashboard-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "employee/login",
+      "ok": true,
+      "detail": "/dashboard"
+    },
+    {
+      "step": "employee/dashboard-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "attendance/check-out",
+      "ok": true,
+      "detail": "\"Check Out\" -> \"Check In\""
+    },
+    {
+      "step": "attendance/check-in",
+      "ok": true,
+      "detail": "\"Check In\" -> \"Check Out\""
+    },
+    {
+      "step": "people/directory-render",
+      "ok": true,
+      "detail": "45 people"
+    },
+    {
+      "step": "people/directory-populated",
+      "ok": true,
+      "detail": "45 people links"
+    },
+    {
+      "step": "people/profile-render",
+      "ok": true,
+      "detail": "/dashboard/directory"
+    },
+    {
+      "step": "people/org-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "people/kudos-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "attendance/history-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "attendance/history-has-rows",
+      "ok": true,
+      "detail": "2 row-like elements"
+    },
+    {
+      "step": "leave/submit",
+      "ok": true,
+      "detail": "pending row present"
+    },
+    {
+      "step": "notifications/baseline",
+      "ok": true,
+      "detail": "0 matching notifications before approval (expect 0)"
+    },
+    {
+      "step": "manager/login",
+      "ok": true,
+      "detail": "/dashboard"
+    },
+    {
+      "step": "manager/approvals-render",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "step": "leave/approve",
+      "ok": true,
+      "detail": "approved the HR-75 request"
+    },
+    {
+      "step": "notifications/realtime-live-delivery",
+      "ok": true,
+      "detail": "notification appeared WITHOUT reload (Supabase Realtime)"
+    },
+    {
+      "step": "notifications/mark-read",
+      "ok": true,
+      "detail": "marked read (button gone)"
+    },
+    {
+      "step": "admin/login",
+      "ok": true,
+      "detail": "/dashboard"
+    },
+    {
+      "step": "admin/dashboard-render",
+      "ok": true,
+      "detail": "landed /admin"
+    },
+    {
+      "step": "admin/dashboard-access",
+      "ok": true,
+      "detail": "admin access granted"
+    },
+    {
+      "step": "admin/attendance-render",
+      "ok": true,
+      "detail": "landed /admin/attendance"
+    },
+    {
+      "step": "admin/attendance-access",
+      "ok": true,
+      "detail": "admin access granted"
+    },
+    {
+      "step": "admin/leave-render",
+      "ok": true,
+      "detail": "landed /admin/leave"
+    },
+    {
+      "step": "admin/leave-access",
+      "ok": true,
+      "detail": "admin access granted"
+    },
+    {
+      "step": "admin/employees-render",
+      "ok": true,
+      "detail": "landed /admin/employees"
+    },
+    {
+      "step": "admin/employees-access",
+      "ok": true,
+      "detail": "admin access granted"
+    },
+    {
+      "step": "admin/sites-render",
+      "ok": true,
+      "detail": "landed /admin/sites"
+    },
+    {
+      "step": "admin/sites-access",
+      "ok": true,
+      "detail": "admin access granted"
+    }
+  ]
+}
