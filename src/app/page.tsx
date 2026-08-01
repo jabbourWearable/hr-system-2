@@ -9,14 +9,15 @@ export default function Home() {
       <div className="relative flex max-w-2xl flex-col items-center gap-7">
         <span className="inline-flex items-center gap-2 rounded-full border border-hairline-strong bg-elevated px-3 py-1 font-mono text-xs text-body">
           <span className="h-1.5 w-1.5 rounded-full bg-accent-green" aria-hidden />
-          Geo-attendance · Leave · Notifications
+          People · Attendance · Leave · Recognition
         </span>
         <h1 className="display-serif text-5xl sm:text-6xl md:text-7xl">
-          Where your team checks&nbsp;in.
+          Your whole team, in one&nbsp;place.
         </h1>
         <p className="max-w-md text-base text-mute">
-          Check in and out at your work site, manage leave requests, and stay
-          on top of approvals — all in one place.
+          A company directory and org chart, geo-attendance and leave, plus
+          kudos and celebrations that keep the team connected — all in one
+          place.
         </p>
         <div className="flex gap-3">
           <Link href="/login" className="btn btn-primary">

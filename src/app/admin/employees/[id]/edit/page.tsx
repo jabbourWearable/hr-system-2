@@ -16,7 +16,9 @@ export default async function EditEmployeePage({
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, manager_id, site_id")
+    .select(
+      "id, full_name, role, manager_id, site_id, job_title, department, start_date, birthday, about",
+    )
     .eq("id", id)
     .single();
 
@@ -62,6 +64,11 @@ export default async function EditEmployeePage({
             role: profile.role,
             managerId: profile.manager_id,
             siteId: profile.site_id,
+            jobTitle: profile.job_title,
+            department: profile.department,
+            startDate: profile.start_date,
+            birthday: profile.birthday,
+            about: profile.about,
           }}
           submitLabel="Save changes"
         />

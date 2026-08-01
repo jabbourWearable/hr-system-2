@@ -54,7 +54,7 @@ export default function RootLayout({
         <footer className="flex items-center justify-between gap-4 border-t border-hairline px-6 py-5">
           <span className="section-label">HR System</span>
           <span className="font-mono text-xs text-ash">
-            Attendance · Leave · Notifications
+            People · Attendance · Leave · Recognition
           </span>
         </footer>
       </body>

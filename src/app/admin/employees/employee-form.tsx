@@ -11,7 +11,17 @@ type Props = {
   ) => Promise<EmployeeFormState>;
   managers: { id: string; fullName: string }[];
   sites: { id: string; name: string }[];
-  defaultValues: { role: Role; managerId: string | null; siteId: string | null };
+  defaultValues: {
+    role: Role;
+    managerId: string | null;
+    siteId: string | null;
+    // HR-68 directory / profile fields.
+    jobTitle: string | null;
+    department: string | null;
+    startDate: string | null;
+    birthday: string | null;
+    about: string | null;
+  };
   submitLabel: string;
 };
 
@@ -81,6 +91,76 @@ export function EmployeeForm({
             </option>
           ))}
         </select>
+      </div>
+
+      {/* HR-68 directory / profile fields */}
+      <div className="border-t border-hairline pt-4">
+        <p className="section-label">Profile &amp; directory</p>
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor="jobTitle" className="text-sm font-medium text-ink">
+          Job title
+        </label>
+        <input
+          id="jobTitle"
+          name="jobTitle"
+          type="text"
+          defaultValue={defaultValues.jobTitle ?? ""}
+          placeholder="e.g. Product Designer"
+          className="field w-full"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor="department" className="text-sm font-medium text-ink">
+          Department
+        </label>
+        <input
+          id="department"
+          name="department"
+          type="text"
+          defaultValue={defaultValues.department ?? ""}
+          placeholder="e.g. Engineering"
+          className="field w-full"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label htmlFor="startDate" className="text-sm font-medium text-ink">
+            Start date
+          </label>
+          <input
+            id="startDate"
+            name="startDate"
+            type="date"
+            defaultValue={defaultValues.startDate ?? ""}
+            className="field w-full"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="birthday" className="text-sm font-medium text-ink">
+            Birthday
+          </label>
+          <input
+            id="birthday"
+            name="birthday"
+            type="date"
+            defaultValue={defaultValues.birthday ?? ""}
+            className="field w-full"
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor="about" className="text-sm font-medium text-ink">
+          About
+        </label>
+        <textarea
+          id="about"
+          name="about"
+          rows={3}
+          defaultValue={defaultValues.about ?? ""}
+          placeholder="Short bio shown on the profile page"
+          className="field w-full"
+        />
       </div>
       {state?.error && (
         <p role="alert" className="text-sm text-accent-red">

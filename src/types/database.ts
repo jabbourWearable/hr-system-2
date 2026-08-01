@@ -20,6 +20,12 @@ export type Database = {
           role: Role;
           manager_id: string | null;
           site_id: string | null;
+          // People Hub fields (migration 0008, HR-68). All nullable.
+          job_title: string | null;
+          department: string | null;
+          start_date: string | null;
+          birthday: string | null;
+          about: string | null;
           created_at: string;
         };
         Insert: {
@@ -30,9 +36,34 @@ export type Database = {
           role?: Role;
           manager_id?: string | null;
           site_id?: string | null;
+          job_title?: string | null;
+          department?: string | null;
+          start_date?: string | null;
+          birthday?: string | null;
+          about?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      kudos: {
+        Row: {
+          id: string;
+          giver_id: string;
+          recipient_id: string;
+          category: string;
+          message: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          giver_id: string;
+          recipient_id: string;
+          category?: string;
+          message: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["kudos"]["Insert"]>;
         Relationships: [];
       };
       sites: {
