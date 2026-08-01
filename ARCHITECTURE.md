@@ -741,3 +741,52 @@ hold their roles):
 
 Both the admin and manager review paths now create a real-time, mark-readable
 notification, covering all three of HR-14's acceptance criteria end to end.
+
+## Vercel deployment (HR-17)
+
+Deployed via the Vercel CLI (`vercel link`, `vercel env add`, `vercel --prod`)
+rather than the dashboard's GitHub-import flow — this workspace's Vercel
+account (`jaboordandan14-5259`, team `jabbours-projects-37a3aeab`) does not
+have admin/write access on the `jabbourWearable/hr-system-2` GitHub repo, so
+`vercel link`'s automatic "Connecting GitHub repository" step failed with
+`You need admin or write access to the repository`. The project itself still
+linked successfully (`prj_zo4kjgGmMFtvBwxn1dlxVQN796ZO`); it just doesn't have
+git-push-triggered auto-deploys wired up. **Consequence:** future deploys need
+a manual `vercel --prod` from a workspace with this Vercel CLI session, until
+someone either grants the Vercel account write access on the GitHub repo or
+re-links from an account that already has it. Preview-environment env vars
+hit the same root cause (`vercel env add ... preview` requires a connected
+git repo to resolve "all preview branches" or a specific branch) — skipped,
+since only Production is in scope for HR-17's acceptance criteria.
+
+Env vars set on the Vercel project (Production + Development so far):
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — same values as
+`.env.local`, same Supabase project (`xrbdqazyhbjmwhilfmkj`) used throughout
+dev. `SUPABASE_SERVICE_ROLE_KEY` was deliberately left unset: it's still
+blank everywhere (see the HR-9/HR-14 blocker history above) and, confirmed via
+`grep -rln "supabase/admin" src/`, nothing in the codebase actually imports
+`src/lib/supabase/admin.ts` — it's dead code, so its absence can't break the
+build or any runtime path.
+
+Live production URL: **https://hr-system-2-iota.vercel.app** (aliased from
+deployment `dpl_B4yuYLciRDcAYSAB3FSy7jtwnq5z`). Served over HTTPS with HSTS
+(`strict-transport-security: max-age=63072000; includeSubDomains; preload`),
+confirmed via `curl -sI`.
+
+**Verification, not just a build check** — two full live Playwright passes
+against the actual deployed URL (not localhost):
+
+- Logged in as the pre-existing `hr13.employee@example.com` fixture and
+  landed on `/dashboard` — proves the Production env vars are correctly wired
+  to the real Supabase project (a bad URL/key would have failed this).
+- Signed up a brand-new throwaway account
+  (`hr17.deploycheck.<timestamp>@example.com`) through the live `/signup`
+  page and landed directly on `/dashboard` with zero email-confirmation step
+  — proves HR-17's criterion 3 end to end, not just via an API settings
+  check. (Separately re-confirmed via `GET /auth/v1/settings`:
+  `mailer_autoconfirm: true`, `external.email: true` — this is the same
+  Supabase project as dev, not a separate prod project, so there was nothing
+  to replicate.)
+
+Screenshots in `qa-evidence/hr-17-vercel-deploy/` (login, dashboard-after-login,
+signup, dashboard-after-signup-with-no-confirmation-step).
