@@ -243,6 +243,32 @@ export default async function DashboardPage() {
         </nav>
       </section>
 
+      <section className="space-y-3">
+        <h2 className="section-label">Performance</h2>
+        <nav className="flex flex-col gap-1.5 text-sm">
+          <Link href="/dashboard/reviews" className="font-medium text-link hover:underline">
+            My performance reviews
+          </Link>
+          <Link href="/dashboard/goals" className="font-medium text-link hover:underline">
+            My goals &amp; OKRs
+          </Link>
+          {user.role === "manager" && (
+            <Link
+              href="/dashboard/goals/team"
+              className="font-medium text-link hover:underline"
+            >
+              My team&apos;s goals &amp; OKRs
+            </Link>
+          )}
+          <Link
+            href="/dashboard/one-on-ones"
+            className="font-medium text-link hover:underline"
+          >
+            1:1s
+          </Link>
+        </nav>
+      </section>
+
       <NotificationsList userId={user.id} initialNotifications={notifications ?? []} />
     </main>
   );

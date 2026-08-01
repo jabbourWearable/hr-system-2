@@ -997,3 +997,90 @@ workflow, manager team-progress view, and a non-manager redirected away
 from `/dashboard/onboarding/team`. Test workflow rows deleted after the
 run via `psql` (same test-data-cleanup discipline as HR-75's sign-up
 test user).
+
+## Performance reviews, goals/OKRs, & 1:1 notes (HR-78)
+
+hibob-inspired Performance module: review cycles with a self-assessment ->
+manager-assessment + 1-5 rating workflow, employee-owned OKRs (objectives
+rolling up key results, or standalone goals), and manager/employee 1:1
+meetings with shared + private notes. Schema in
+`supabase/migrations/0010_performance_reviews_goals.sql`:
+
+- `review_cycles`: a named period (`draft`/`active`/`closed`) admin opens
+  and closes. Readable by any authenticated user (same "internal directory"
+  posture as `profiles`/`sites`) so an employee's own review page can show
+  which cycle it belongs to; only admin writes.
+- `performance_reviews`: one row per employee per cycle
+  (`unique(cycle_id, employee_id)`). `reviewer_id` defaults to the
+  employee's `manager_id` at generation time but is its own column, not
+  re-derived from `profiles` — a review's reviewer stays fixed even if the
+  employee is later reassigned, and an admin can hand a review to someone
+  other than the direct manager (skip-level) without a schema change.
+  Workflow: `pending_self` (employee fills `self_assessment`, submits ->
+  locks and flips to `pending_manager`) -> `pending_manager` (reviewer
+  fills `manager_assessment` + `rating` 1-5, submits -> `completed`). Same
+  single-submit-locks-the-stage shape as `leave_requests`/`onboarding_tasks`
+  — no draft/re-edit state, kept consistent with the rest of the app.
+- `goals`: employee-owned OKR row. `goal_type` is `objective`/`key_result`/
+  `goal`; a `check` constraint (`goals_parent_only_for_key_result`) enforces
+  that only a `key_result` may set `parent_goal_id` (an objective/goal is
+  always top-level) — cheap to enforce at the DB layer since both columns
+  live on the same row, no trigger needed. `src/lib/performance/goals.ts`
+  (`groupGoalsWithRollup`) computes a top-level goal's *effective* progress
+  as the average of its key results' own `progress` when it has any,
+  otherwise its own `progress` column.
+- `one_on_ones` (meeting metadata: participants, date, status) +
+  `one_on_one_notes` (note bodies, normalized into their own table rather
+  than columns on `one_on_ones`). A note's `visibility` is `shared` (either
+  participant can read/edit — a joint agenda/action-items doc, enforced via
+  two separate update policies since the second participant to edit it
+  usually isn't its original author) or `private` (only the author, ever).
+  Partial unique indexes (`one_on_one_notes_shared_unique`/`_private_unique`)
+  cap it at one shared note and one private note per author per meeting.
+  `is_one_on_one_participant()` (security-definer SQL function, same shape
+  as `is_admin()`/`is_manager_of()`) lets the notes table's RLS check
+  participation without a `employee_id`/`manager_id` column of its own.
+
+**Deliberate privacy carve-out, different from every other table in this
+project:** `one_on_one_notes` has **no admin bypass at all** — not even a
+read-only one. Every other feature here (`onboarding_*`, `leave_requests`,
+`goals`, etc.) gives admin/HR full read/write via an `_admin_all` policy,
+since that's a normal HR function. A private 1:1 note is a personal
+reflection ahead of a meeting; it's readable only by whoever wrote it, full
+stop. Admin still sees that a 1:1 happened via `one_on_ones` (participants,
+date, status) for oversight that the practice is happening at all — it just
+can't read what either party wrote. `src/app/dashboard/one-on-ones/actions.ts`
+(`saveOneOnOneNote`) does a select-then-insert-or-update rather than an
+`upsert()`/`ON CONFLICT`, because Postgres can't target a *partial* unique
+index's arbiter via the plain `ON CONFLICT (columns)` clause PostgREST's
+`upsert()` generates — worth remembering for any future partial-unique-index
+table in this codebase.
+
+Routes:
+- `/admin/reviews` (+ `/new`, `/[id]`): cycle list + creation, cycle detail
+  with status controls (activate/close/revert to draft) and a "Generate
+  reviews for everyone" button (creates a `performance_reviews` row for
+  every employee without one yet in that cycle). Each review row links to
+  the shared detail page below rather than a separate admin-only view.
+- `/dashboard/reviews` (+ `/[id]`): "your reviews" (self-assessment) and
+  "reviews you're writing" (as a reviewer) sections, same dual-section shape
+  as `/dashboard/onboarding`. The `[id]` detail page is shared by all three
+  possible viewers (employee/reviewer/admin) — which section renders
+  editable vs. read-only depends on the relationship between the viewer and
+  the row; RLS is what actually decides whether the row loads at all.
+- `/dashboard/goals` (+ `/team`), `/admin/goals`: full CRUD for your own
+  goals; read-only rollups for a manager's direct reports and for admin
+  company-wide (with an employee filter).
+- `/dashboard/one-on-ones` (+ `/new`, `/[id]`): meetings-with-your-manager
+  and (managers only) meetings-with-your-reports lists; schedule a new 1:1
+  with a direct report; meeting detail with the shared/private note forms
+  described above.
+
+No Realtime wiring this time (unlike `notifications`) — nothing in this
+feature's spec called for a live push, and every flow here (self-assessment
+submit, manager rating, goal progress, 1:1 notes) is a deliberate,
+in-session save, not something another party needs to see instantly.
+
+Verification: `npm run build` clean; migration applied live via
+`psql "$DATABASE_URL"` and RLS policies confirmed via `\d` + `pg_policies`;
+live Playwright pass in `qa-evidence/hr-78-performance/capture.js`.

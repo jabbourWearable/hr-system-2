@@ -10,6 +10,12 @@ export type LeaveStatus = "pending" | "approved" | "rejected";
 export type WorkflowType = "onboarding" | "offboarding";
 export type WorkflowStatus = "active" | "completed" | "cancelled";
 export type OnboardingTaskStatus = "pending" | "in_progress" | "done";
+export type ReviewCycleStatus = "draft" | "active" | "closed";
+export type PerformanceReviewStatus = "pending_self" | "pending_manager" | "completed";
+export type GoalType = "objective" | "key_result" | "goal";
+export type GoalStatus = "not_started" | "on_track" | "at_risk" | "completed";
+export type OneOnOneStatus = "scheduled" | "completed";
+export type OneOnOneNoteVisibility = "private" | "shared";
 
 export type Database = {
   public: {
@@ -218,6 +224,139 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["onboarding_tasks"]["Insert"]>;
+        Relationships: [];
+      };
+      // Performance reviews, goals/OKRs, & 1:1 notes (migration 0010, HR-78).
+      review_cycles: {
+        Row: {
+          id: string;
+          name: string;
+          status: ReviewCycleStatus;
+          start_date: string | null;
+          end_date: string | null;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          status?: ReviewCycleStatus;
+          start_date?: string | null;
+          end_date?: string | null;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["review_cycles"]["Insert"]>;
+        Relationships: [];
+      };
+      performance_reviews: {
+        Row: {
+          id: string;
+          cycle_id: string;
+          employee_id: string;
+          reviewer_id: string | null;
+          status: PerformanceReviewStatus;
+          self_assessment: string | null;
+          self_submitted_at: string | null;
+          manager_assessment: string | null;
+          rating: number | null;
+          manager_submitted_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          cycle_id: string;
+          employee_id: string;
+          reviewer_id?: string | null;
+          status?: PerformanceReviewStatus;
+          self_assessment?: string | null;
+          self_submitted_at?: string | null;
+          manager_assessment?: string | null;
+          rating?: number | null;
+          manager_submitted_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["performance_reviews"]["Insert"]>;
+        Relationships: [];
+      };
+      goals: {
+        Row: {
+          id: string;
+          employee_id: string;
+          cycle_id: string | null;
+          goal_type: GoalType;
+          parent_goal_id: string | null;
+          title: string;
+          description: string | null;
+          status: GoalStatus;
+          progress: number;
+          due_date: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          cycle_id?: string | null;
+          goal_type?: GoalType;
+          parent_goal_id?: string | null;
+          title: string;
+          description?: string | null;
+          status?: GoalStatus;
+          progress?: number;
+          due_date?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["goals"]["Insert"]>;
+        Relationships: [];
+      };
+      one_on_ones: {
+        Row: {
+          id: string;
+          employee_id: string;
+          manager_id: string;
+          meeting_date: string;
+          status: OneOnOneStatus;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          manager_id: string;
+          meeting_date: string;
+          status?: OneOnOneStatus;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["one_on_ones"]["Insert"]>;
+        Relationships: [];
+      };
+      one_on_one_notes: {
+        Row: {
+          id: string;
+          one_on_one_id: string;
+          author_id: string;
+          visibility: OneOnOneNoteVisibility;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          one_on_one_id: string;
+          author_id: string;
+          visibility: OneOnOneNoteVisibility;
+          body?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["one_on_one_notes"]["Insert"]>;
         Relationships: [];
       };
     };
