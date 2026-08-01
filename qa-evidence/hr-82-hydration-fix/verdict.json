@@ -1,0 +1,29 @@
+{
+  "base": "https://hr-system-2-iota.vercel.app",
+  "passed": 3,
+  "total": 3,
+  "errors": [],
+  "results": [
+    {
+      "name": "notification rows render",
+      "ok": true,
+      "notes": [
+        "rows=10"
+      ]
+    },
+    {
+      "name": "timestamps deterministic en-US/UTC",
+      "ok": true,
+      "notes": [
+        "Aug 1, 2026, 14:23 UTC",
+        "Aug 1, 2026, 13:42 UTC",
+        "Jul 31, 2026, 20:43 UTC"
+      ]
+    },
+    {
+      "name": "zero console/page errors (bug was 2x React #418)",
+      "ok": true,
+      "notes": []
+    }
+  ]
+}
