@@ -1,0 +1,39 @@
+name: Production deploy guard
+
+# The Vercel project is not Git-connected (see ARCHITECTURE.md "Vercel deploy
+# guard (HR-73)"), so a merge to main does not by itself reach production.
+# This fails loudly whenever the live commit drifts from main HEAD, instead
+# of leaving a shipped feature silently 404ing (HR-72).
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check-deployed-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare live production commit to main HEAD
+        env:
+          BASE_URL: https://hr-system-2-iota.vercel.app
+        run: |
+          MAIN_SHA=$(git rev-parse HEAD)
+          LIVE=$(curl -fsS "$BASE_URL/api/version")
+          echo "Live response: $LIVE"
+          LIVE_SHA=$(node -e "console.log(JSON.parse(process.argv[1]).commit || '')" "$LIVE")
+
+          if [ -z "$LIVE_SHA" ]; then
+            echo "::error::Production $BASE_URL/api/version returned no commit SHA. Deploy tagging is broken or the endpoint is missing — production is likely stale."
+            exit 1
+          fi
+
+          if [ "$LIVE_SHA" != "$MAIN_SHA" ]; then
+            echo "::error::Production is STALE. Live commit=$LIVE_SHA, main HEAD=$MAIN_SHA. Run scripts/deploy-prod.sh to redeploy."
+            exit 1
+          fi
+
+          echo "Production is up to date with main ($MAIN_SHA)."

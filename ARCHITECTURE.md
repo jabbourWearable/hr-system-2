@@ -792,6 +792,49 @@ against the actual deployed URL (not localhost):
 Screenshots in `qa-evidence/hr-17-vercel-deploy/` (login, dashboard-after-login,
 signup, dashboard-after-signup-with-no-confirmation-step).
 
+## Vercel deploy guard (HR-73)
+
+HR-72 caught the consequence of the HR-17 git-connect gap: HR-68 (People Hub)
+sat merged on `main` for ~1h while production 404'd, because nobody ran the
+manual `vercel --prod`. HR-73 re-attempted the "preferred" fix — `vercel git
+connect --yes` — and hit the same permission wall as HR-17, but with a
+concrete root cause this time: the Vercel CLI session (`jaboordandan14-5259`)
+is OAuth-linked to GitHub identity **`i002ff`**, not `jabbourWearable` (the
+repo owner) or `jabbourdan` (a second GitHub account with only read access on
+this repo). `i002ff` had no access at all, so `vercel git connect` failed
+with `You need admin or write access to the repository`.
+
+Granted `i002ff` write access via
+`gh api -X PUT /repos/jabbourWearable/hr-system-2/collaborators/i002ff -f permission=push`
+using the `jabbourWearable` admin token — but GitHub collaborator invites
+require acceptance by the invitee, and no agent credential here is logged in
+as `i002ff`. The invite is pending
+(https://github.com/jabbourWearable/hr-system-2/invitations); once a human
+accepts it as `i002ff`, `vercel git connect --yes` (or the equivalent in the
+Vercel dashboard Project Settings → Git) should succeed immediately and this
+whole guard becomes redundant (but harmless to keep).
+
+Since that step needs a human with `i002ff`'s GitHub login, implemented the
+fallback instead — a guardrail that loudly flags a stale production deploy
+rather than requiring a human to remember `vercel --prod` after every merge:
+
+- **`GET /api/version`** (`src/app/api/version/route.ts`) returns
+  `{ commit, deployedAt }`, sourced from a `DEPLOY_COMMIT_SHA` env var stamped
+  in at deploy time (falls back to `VERCEL_GIT_COMMIT_SHA`, which Vercel would
+  populate automatically if git-connect above ever lands).
+- **`scripts/deploy-prod.sh`** replaces bare `vercel --prod` as the runbook
+  step: refuses to deploy unless the local checkout's HEAD matches
+  `origin/main`, deploys with `DEPLOY_COMMIT_SHA` baked in via `--build-env`
+  and `-e`, then curls `/api/version` and fails the script if the live commit
+  doesn't match what was just deployed.
+- **`.github/workflows/prod-deploy-guard.yml`** runs on every push to `main`
+  and on a 30-minute schedule: fetches `/api/version` from
+  `https://hr-system-2-iota.vercel.app`, compares it to `main` HEAD, and fails
+  the workflow (red X, visible in the Actions tab) whenever they diverge —
+  including immediately after a merge, until someone runs
+  `scripts/deploy-prod.sh`. That immediate red X is the intended signal, not
+  a bug.
+
 ## Leftover legacy `auth.users` rows blocked real sign-ups (HR-59)
 
 A real user hit "User already registered" signing up with a brand-new-to-
