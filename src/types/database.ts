@@ -7,6 +7,9 @@
 
 export type Role = "employee" | "manager" | "admin";
 export type LeaveStatus = "pending" | "approved" | "rejected";
+export type WorkflowType = "onboarding" | "offboarding";
+export type WorkflowStatus = "active" | "completed" | "cancelled";
+export type OnboardingTaskStatus = "pending" | "in_progress" | "done";
 
 export type Database = {
   public: {
@@ -160,6 +163,61 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+        Relationships: [];
+      };
+      // Onboarding & offboarding workflows (migration 0009, HR-77).
+      onboarding_workflows: {
+        Row: {
+          id: string;
+          employee_id: string;
+          workflow_type: WorkflowType;
+          status: WorkflowStatus;
+          target_date: string;
+          created_by: string;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          workflow_type: WorkflowType;
+          status?: WorkflowStatus;
+          target_date: string;
+          created_by: string;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["onboarding_workflows"]["Insert"]>;
+        Relationships: [];
+      };
+      onboarding_tasks: {
+        Row: {
+          id: string;
+          workflow_id: string;
+          employee_id: string;
+          title: string;
+          description: string | null;
+          assignee_id: string | null;
+          due_date: string | null;
+          status: OnboardingTaskStatus;
+          order_index: number;
+          completed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workflow_id: string;
+          employee_id: string;
+          title: string;
+          description?: string | null;
+          assignee_id?: string | null;
+          due_date?: string | null;
+          status?: OnboardingTaskStatus;
+          order_index?: number;
+          completed_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["onboarding_tasks"]["Insert"]>;
         Relationships: [];
       };
     };

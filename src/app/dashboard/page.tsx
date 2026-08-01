@@ -223,6 +223,26 @@ export default async function DashboardPage() {
         </nav>
       </section>
 
+      <section className="space-y-3">
+        <h2 className="section-label">Onboarding &amp; offboarding</h2>
+        <nav className="flex flex-col gap-1.5 text-sm">
+          <Link
+            href="/dashboard/onboarding"
+            className="font-medium text-link hover:underline"
+          >
+            My checklist &amp; assigned tasks
+          </Link>
+          {user.role === "manager" && (
+            <Link
+              href="/dashboard/onboarding/team"
+              className="font-medium text-link hover:underline"
+            >
+              My team&apos;s onboarding &amp; offboarding
+            </Link>
+          )}
+        </nav>
+      </section>
+
       <NotificationsList userId={user.id} initialNotifications={notifications ?? []} />
     </main>
   );

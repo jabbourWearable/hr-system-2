@@ -933,3 +933,67 @@ Verification: `npm run build` clean; live Playwright pass over all
 surfaces (signup → dashboard → leave/attendance; admin promoted via SQL →
 admin overview/employees/sites/attendance) in dark and light,
 screenshots in `qa-evidence/hr-62-redesign/`.
+
+## Onboarding & offboarding workflows (HR-77)
+
+Structured new-hire/departing-employee checklists (hibob-style core-HR
+lifecycle capability): a **workflow** per employee lifecycle event
+(onboarding or offboarding), made up of **tasks** with an assignee, an
+optional due date, and a status, so progress rolls up into a
+done/total/percent bar. Schema in
+`supabase/migrations/0009_onboarding_offboarding.sql`:
+
+- `onboarding_workflows`: `employee_id`, `workflow_type`
+  (`onboarding`/`offboarding`), `status` (`active`/`completed`/
+  `cancelled`), `target_date` (start date for onboarding, last working day
+  for offboarding), `created_by`.
+- `onboarding_tasks`: `workflow_id`, `title`, `description`, `assignee_id`
+  (nullable — a task can be unassigned), `due_date`, `status`
+  (`pending`/`in_progress`/`done`), `order_index`. Carries its own
+  denormalized `employee_id` (copied from the parent workflow) purely so
+  its RLS policies can check it directly — same shape as every other
+  table here — instead of an `EXISTS` subquery joining back into
+  `onboarding_workflows`.
+- RLS mirrors `leave_requests`: the employee the workflow is about and
+  their manager (`is_manager_of`) get read access; admin gets full
+  read/write (`onboarding_*_admin_all`); a task's own `assignee_id` can
+  update that one task's status (`onboarding_tasks_update_assignee`) —
+  e.g. a manager assigned a "Welcome meeting" task on a direct report's
+  onboarding can mark it done even though they're not the workflow's
+  `employee_id`.
+- `src/lib/onboarding/templates.ts` holds a standard onboarding checklist
+  and a standard offboarding checklist (title/description/`dayOffset`
+  from `target_date`/default-assignee-role). Admin can seed a new
+  workflow from these (`/admin/onboarding/new`), then freely add/edit/
+  reassign/delete tasks — it's a starting point, not a locked template
+  system. Default-assignee roles resolve at creation time: `employee` →
+  the new hire themself, `manager` → their `manager_id` (if set),
+  `admin` → the admin creating the workflow.
+
+Routes:
+- `/admin/onboarding` (+ `/new`, `/[id]`): company-wide list with a
+  status filter, workflow creation, and per-task inline edit
+  (title/description/assignee/due date/status) + add/delete, plus
+  workflow status controls (mark completed/cancel/reactivate).
+- `/dashboard/onboarding`: any employee's own checklist (full read,
+  including tasks assigned to others like their manager) plus a "tasks
+  assigned to you" section for tasks on *someone else's* workflow (e.g.
+  a manager's own checklist items on a direct report's onboarding) —
+  only rows where the current user is the assignee are editable there,
+  everything else renders as a read-only status badge.
+- `/dashboard/onboarding/team` (manager-only, `requireRole('manager')`):
+  the same progress view scoped to direct reports, mirroring the
+  `/dashboard/attendance/team` / `/dashboard/leave/approvals` pattern of
+  a manager-scoped route next to the admin-scoped equivalent.
+
+Verification: `npm run build` clean; migration applied live via
+`psql "$DATABASE_URL"` and RLS policies confirmed via `\d` + `pg_policies`;
+21/21 live Playwright checks in
+`qa-evidence/hr-77-onboarding/capture.js` — admin create-from-template
+(assignee-role resolution to three different people), inline task edit/
+add/delete, workflow status toggle, employee marking their own task
+done, manager marking their own assigned task done on a report's
+workflow, manager team-progress view, and a non-manager redirected away
+from `/dashboard/onboarding/team`. Test workflow rows deleted after the
+run via `psql` (same test-data-cleanup discipline as HR-75's sign-up
+test user).

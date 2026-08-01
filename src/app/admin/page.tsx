@@ -26,6 +26,7 @@ export default async function AdminPage() {
     { count: currentlyCheckedIn },
     { count: pendingLeaveRequests },
     { count: siteCount },
+    { count: activeWorkflows },
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase
@@ -42,6 +43,10 @@ export default async function AdminPage() {
       .select("*", { count: "exact", head: true })
       .eq("status", "pending"),
     supabase.from("sites").select("*", { count: "exact", head: true }),
+    supabase
+      .from("onboarding_workflows")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active"),
   ]);
 
   const stats = [
@@ -50,6 +55,7 @@ export default async function AdminPage() {
     { label: "Currently checked in", value: currentlyCheckedIn ?? 0 },
     { label: "Pending leave requests", value: pendingLeaveRequests ?? 0 },
     { label: "Work sites", value: siteCount ?? 0 },
+    { label: "Active onboarding/offboarding", value: activeWorkflows ?? 0 },
   ];
 
   const adminLinks = [
@@ -58,6 +64,7 @@ export default async function AdminPage() {
     { href: "/admin/sites", label: "Work sites" },
     { href: "/admin/attendance", label: "Attendance history" },
     { href: "/admin/leave", label: "Leave approvals" },
+    { href: "/admin/onboarding", label: "Onboarding & offboarding" },
   ];
 
   return (
