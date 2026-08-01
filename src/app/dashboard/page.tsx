@@ -32,66 +32,84 @@ export default async function DashboardPage() {
       .limit(20),
   ]);
 
+  const profileFacts = [
+    { label: "Role", value: user.role, mono: false, capitalize: true },
+    { label: "Employee code", value: user.employeeCode ?? "Not assigned yet", mono: true },
+    { label: "Manager", value: user.managerId ?? "Not assigned yet", mono: true },
+    { label: "Site", value: site?.name ?? user.siteId ?? "Not assigned yet", mono: false },
+  ];
+
   return (
-    <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Welcome, {user.fullName}</h1>
-          <p className="text-sm text-foreground-muted">{user.email}</p>
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl sm:text-4xl">
+            Welcome, {user.fullName}
+          </h1>
+          <p className="font-mono text-sm text-mute">{user.email}</p>
         </div>
         <LogoutButton />
       </div>
-      <dl className="grid max-w-sm grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <dt className="text-foreground-muted">Role</dt>
-        <dd className="capitalize">{user.role}</dd>
-        <dt className="text-foreground-muted">Employee code</dt>
-        <dd>{user.employeeCode ?? "Not assigned yet"}</dd>
-        <dt className="text-foreground-muted">Manager</dt>
-        <dd>{user.managerId ?? "Not assigned yet"}</dd>
-        <dt className="text-foreground-muted">Site</dt>
-        <dd>{user.siteId ?? "Not assigned yet"}</dd>
-      </dl>
-      <section className="max-w-sm space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
-          Attendance
-        </h2>
-        <CheckInOut
-          hasSite={Boolean(user.siteId)}
-          siteName={site?.name ?? null}
-          initialIsCheckedIn={Boolean(openRecord)}
-        />
-        <nav className="flex flex-col gap-1 pt-1">
-          <Link href="/dashboard/attendance" className="font-medium text-primary hover:underline">
+
+      <section className="space-y-3">
+        <h2 className="section-label">Profile</h2>
+        <dl className="card grid grid-cols-2 gap-x-6 gap-y-4 p-6 sm:grid-cols-4">
+          {profileFacts.map((fact) => (
+            <div key={fact.label} className="space-y-1">
+              <dt className="section-label">{fact.label}</dt>
+              <dd
+                className={`break-all text-sm text-ink ${fact.mono ? "font-mono text-[13px]" : ""} ${
+                  fact.capitalize ? "capitalize" : ""
+                }`}
+              >
+                {fact.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="section-label">Attendance</h2>
+        <div className="card max-w-md space-y-3 p-6">
+          <CheckInOut
+            hasSite={Boolean(user.siteId)}
+            siteName={site?.name ?? null}
+            initialIsCheckedIn={Boolean(openRecord)}
+          />
+        </div>
+        <nav className="flex flex-col gap-1.5 pt-1 text-sm">
+          <Link href="/dashboard/attendance" className="font-medium text-link hover:underline">
             My attendance history
           </Link>
           {user.role === "manager" && (
             <Link
               href="/dashboard/attendance/team"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-link hover:underline"
             >
               My team&apos;s attendance history
             </Link>
           )}
         </nav>
       </section>
-      <section className="max-w-sm space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
-          Leave
-        </h2>
-        <nav className="flex flex-col gap-1 text-sm">
-          <Link href="/dashboard/leave" className="font-medium text-primary hover:underline">
+
+      <section className="space-y-3">
+        <h2 className="section-label">Leave</h2>
+        <nav className="flex flex-col gap-1.5 text-sm">
+          <Link href="/dashboard/leave" className="font-medium text-link hover:underline">
             Request leave / view my requests
           </Link>
           {user.role === "manager" && (
             <Link
               href="/dashboard/leave/approvals"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-link hover:underline"
             >
               Review my team&apos;s leave requests
             </Link>
           )}
         </nav>
       </section>
+
       <NotificationsList userId={user.id} initialNotifications={notifications ?? []} />
     </main>
   );

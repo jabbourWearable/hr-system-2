@@ -1,16 +1,18 @@
 import type { LeaveStatus } from "@/types/database";
 
-const STYLES: Record<LeaveStatus, string> = {
-  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
-  approved: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400",
-  rejected: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400",
+// badge-pill + status-dot per DESIGN.md: a neutral elevated pill whose
+// semantic colour lives in the dot, not the surface (accents are never
+// solid surfaces in this system).
+const DOT_STYLES: Record<LeaveStatus, string> = {
+  pending: "bg-accent-yellow",
+  approved: "bg-accent-green",
+  rejected: "bg-accent-red",
 };
 
 export function LeaveStatusBadge({ status }: { status: LeaveStatus }) {
   return (
-    <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${STYLES[status]}`}
-    >
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline-strong bg-elevated px-2.5 py-0.5 text-xs font-medium capitalize text-body">
+      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${DOT_STYLES[status]}`} />
       {status}
     </span>
   );

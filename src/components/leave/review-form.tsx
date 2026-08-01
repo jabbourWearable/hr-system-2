@@ -24,16 +24,16 @@ export function ReviewForm({ requestId, action }: Props) {
   const [state, formAction, pending] = useActionState(boundAction, undefined);
 
   return (
-    <form action={formAction} className="space-y-2">
-      <div className="space-y-1">
-        <label htmlFor={`comment-${requestId}`} className="text-sm font-medium">
+    <form action={formAction} className="space-y-3">
+      <div className="space-y-1.5">
+        <label htmlFor={`comment-${requestId}`} className="text-sm font-medium text-ink">
           Comment (optional)
         </label>
         <textarea
           id={`comment-${requestId}`}
           name="comment"
           rows={2}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         />
       </div>
       <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export function ReviewForm({ requestId, action }: Props) {
           name="decision"
           value="approved"
           disabled={pending}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          className="btn btn-primary"
         >
           {pending ? "Working…" : "Approve"}
         </button>
@@ -51,18 +51,18 @@ export function ReviewForm({ requestId, action }: Props) {
           name="decision"
           value="rejected"
           disabled={pending}
-          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-red-600 hover:bg-surface disabled:opacity-60"
+          className="btn btn-danger"
         >
           {pending ? "Working…" : "Reject"}
         </button>
       </div>
       {state && "error" in state && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent-red">
           {state.error}
         </p>
       )}
       {state && "message" in state && (
-        <p role="status" className="text-sm text-green-600">
+        <p role="status" className="text-sm text-accent-green">
           {state.message}
         </p>
       )}

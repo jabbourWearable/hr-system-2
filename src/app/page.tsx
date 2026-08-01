@@ -1,26 +1,31 @@
 import Link from "next/link";
 
+// hero-stripe per DESIGN.md: oversized display serif headline, one white
+// primary CTA, a single atmospheric glow, no decorative chrome.
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
-      <h1 className="text-2xl font-semibold">HR Management &amp; Geo-Attendance</h1>
-      <p className="max-w-md text-sm text-foreground-muted">
-        Sign in to check in/out at your work site, manage leave requests, and
-        view your attendance history.
-      </p>
-      <div className="flex gap-3">
-        <Link
-          href="/login"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          Log in
-        </Link>
-        <Link
-          href="/signup"
-          className="rounded-md border border-border px-4 py-2 text-sm font-medium"
-        >
-          Sign up
-        </Link>
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-24 text-center">
+      <div className="atmosphere" aria-hidden />
+      <div className="relative flex max-w-2xl flex-col items-center gap-7">
+        <span className="inline-flex items-center gap-2 rounded-full border border-hairline-strong bg-elevated px-3 py-1 font-mono text-xs text-body">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-green" aria-hidden />
+          Geo-attendance · Leave · Notifications
+        </span>
+        <h1 className="display-serif text-5xl sm:text-6xl md:text-7xl">
+          Where your team checks&nbsp;in.
+        </h1>
+        <p className="max-w-md text-base text-mute">
+          Check in and out at your work site, manage leave requests, and stay
+          on top of approvals — all in one place.
+        </p>
+        <div className="flex gap-3">
+          <Link href="/login" className="btn btn-primary">
+            Log in
+          </Link>
+          <Link href="/signup" className="btn btn-ghost">
+            Sign up
+          </Link>
+        </div>
       </div>
     </main>
   );

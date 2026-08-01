@@ -19,61 +19,54 @@ export default async function AdminSitesPage() {
     .order("name");
 
   return (
-    <main className="flex flex-1 flex-col gap-8 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Work sites</h1>
-          <p className="text-sm text-foreground-muted">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl">Work sites</h1>
+          <p className="text-sm text-mute">
             Admin-managed geofences used to validate employee check-in/out.
           </p>
         </div>
-        <Link
-          href="/admin"
-          className="text-sm font-medium text-primary hover:underline"
-        >
+        <Link href="/admin" className="text-sm font-medium text-link hover:underline">
           Back to admin
         </Link>
       </div>
 
       <section className="max-w-md space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
-          New site
-        </h2>
-        <SiteForm action={createSite} submitLabel="Create site" />
+        <h2 className="section-label">New site</h2>
+        <div className="card p-6">
+          <SiteForm action={createSite} submitLabel="Create site" />
+        </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
-          All sites
-        </h2>
+        <h2 className="section-label">All sites</h2>
         {!sites || sites.length === 0 ? (
-          <p className="text-sm text-foreground-muted">
-            No sites yet — create one above.
-          </p>
+          <p className="text-sm text-mute">No sites yet — create one above.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-border">
+          <div className="card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-surface text-left">
+              <thead className="border-b border-hairline-strong text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Name</th>
-                  <th className="px-3 py-2 font-medium">Latitude</th>
-                  <th className="px-3 py-2 font-medium">Longitude</th>
-                  <th className="px-3 py-2 font-medium">Radius (m)</th>
-                  <th className="px-3 py-2 font-medium">Actions</th>
+                  <th className="section-label px-4 py-3">Name</th>
+                  <th className="section-label px-4 py-3">Latitude</th>
+                  <th className="section-label px-4 py-3">Longitude</th>
+                  <th className="section-label px-4 py-3">Radius (m)</th>
+                  <th className="section-label px-4 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-hairline">
                 {sites.map((site) => (
-                  <tr key={site.id} className="border-t border-border">
-                    <td className="px-3 py-2">{site.name}</td>
-                    <td className="px-3 py-2">{site.latitude}</td>
-                    <td className="px-3 py-2">{site.longitude}</td>
-                    <td className="px-3 py-2">{site.radius_meters}</td>
-                    <td className="px-3 py-2">
+                  <tr key={site.id}>
+                    <td className="px-4 py-3 text-ink">{site.name}</td>
+                    <td className="px-4 py-3 font-mono text-[13px]">{site.latitude}</td>
+                    <td className="px-4 py-3 font-mono text-[13px]">{site.longitude}</td>
+                    <td className="px-4 py-3 font-mono text-[13px]">{site.radius_meters}</td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Link
                           href={`/admin/sites/${site.id}/edit`}
-                          className="font-medium text-primary hover:underline"
+                          className="font-medium text-link hover:underline"
                         >
                           Edit
                         </Link>

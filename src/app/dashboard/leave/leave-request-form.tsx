@@ -18,10 +18,10 @@ export function LeaveRequestForm() {
   );
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label htmlFor="startDate" className="text-sm font-medium">
+        <div className="space-y-1.5">
+          <label htmlFor="startDate" className="text-sm font-medium text-ink">
             Start date
           </label>
           <input
@@ -29,11 +29,11 @@ export function LeaveRequestForm() {
             name="startDate"
             type="date"
             required
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            className="field w-full font-mono text-[13px]"
           />
         </div>
-        <div className="space-y-1">
-          <label htmlFor="endDate" className="text-sm font-medium">
+        <div className="space-y-1.5">
+          <label htmlFor="endDate" className="text-sm font-medium text-ink">
             End date
           </label>
           <input
@@ -41,12 +41,12 @@ export function LeaveRequestForm() {
             name="endDate"
             type="date"
             required
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            className="field w-full font-mono text-[13px]"
           />
         </div>
       </div>
-      <div className="space-y-1">
-        <label htmlFor="leaveType" className="text-sm font-medium">
+      <div className="space-y-1.5">
+        <label htmlFor="leaveType" className="text-sm font-medium text-ink">
           Type
         </label>
         <select
@@ -54,7 +54,7 @@ export function LeaveRequestForm() {
           name="leaveType"
           required
           defaultValue=""
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         >
           <option value="" disabled>
             Select a type
@@ -66,8 +66,8 @@ export function LeaveRequestForm() {
           ))}
         </select>
       </div>
-      <div className="space-y-1">
-        <label htmlFor="reason" className="text-sm font-medium">
+      <div className="space-y-1.5">
+        <label htmlFor="reason" className="text-sm font-medium text-ink">
           Reason
         </label>
         <textarea
@@ -75,19 +75,15 @@ export function LeaveRequestForm() {
           name="reason"
           required
           rows={3}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         />
       </div>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent-red">
           {state.error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "Submitting…" : "Submit request"}
       </button>
     </form>

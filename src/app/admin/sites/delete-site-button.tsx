@@ -23,15 +23,11 @@ export function DeleteSiteButton({
       }}
       className="inline-flex flex-col items-end gap-1"
     >
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-surface disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn btn-sm btn-danger">
         {pending ? "Deleting…" : "Delete"}
       </button>
       {state?.error && (
-        <p role="alert" className="max-w-xs text-right text-xs text-red-600">
+        <p role="alert" className="max-w-xs text-right text-xs text-accent-red">
           {state.error}
         </p>
       )}

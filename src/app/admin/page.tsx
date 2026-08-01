@@ -52,41 +52,49 @@ export default async function AdminPage() {
     { label: "Work sites", value: siteCount ?? 0 },
   ];
 
+  const adminLinks = [
+    { href: "/admin/employees", label: "Employee accounts" },
+    { href: "/admin/sites", label: "Work sites" },
+    { href: "/admin/attendance", label: "Attendance history" },
+    { href: "/admin/leave", label: "Leave approvals" },
+  ];
+
   return (
-    <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Admin</h1>
-          <p className="text-sm text-foreground-muted">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl sm:text-4xl">Admin</h1>
+          <p className="text-sm text-mute">
             Signed in as {user.fullName} ({user.role}).
           </p>
         </div>
         <LogoutButton />
       </div>
 
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-md border border-border p-4">
-            <p className="text-2xl font-semibold">{stat.value}</p>
-            <p className="text-sm text-foreground-muted">{stat.label}</p>
-          </div>
+      {/* sub-nav-pill row per DESIGN.md */}
+      <nav className="flex flex-wrap gap-2">
+        {adminLinks.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="rounded-full border border-hairline-strong bg-elevated px-3.5 py-1.5 text-sm font-medium text-body transition-colors hover:border-stone hover:text-ink"
+          >
+            {link.label}
+          </Link>
         ))}
-      </section>
-
-      <nav className="flex flex-wrap gap-4 text-sm">
-        <Link href="/admin/employees" className="font-medium text-primary hover:underline">
-          Employee accounts
-        </Link>
-        <Link href="/admin/sites" className="font-medium text-primary hover:underline">
-          Work sites
-        </Link>
-        <Link href="/admin/attendance" className="font-medium text-primary hover:underline">
-          Attendance history
-        </Link>
-        <Link href="/admin/leave" className="font-medium text-primary hover:underline">
-          Leave approvals
-        </Link>
       </nav>
+
+      <section className="space-y-3">
+        <h2 className="section-label">Today</h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {stats.map((stat) => (
+            <div key={stat.label} className="card p-5">
+              <p className="display-serif text-4xl">{stat.value}</p>
+              <p className="section-label mt-2">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

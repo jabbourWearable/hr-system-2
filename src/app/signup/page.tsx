@@ -5,13 +5,17 @@ import { SignupForm } from "./signup-form";
 // disabled on the Supabase project, so signup logs the user in immediately.
 export default function SignupPage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-4">
-        <h1 className="text-xl font-semibold">Sign up</h1>
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-16">
+      <div className="atmosphere atmosphere-green" aria-hidden />
+      <div className="card relative w-full max-w-sm space-y-5 p-8">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl">Sign up</h1>
+          <p className="text-sm text-mute">Create your account.</p>
+        </div>
         <SignupForm />
-        <p className="text-sm text-foreground-muted">
+        <p className="text-sm text-mute">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary underline">
+          <Link href="/login" className="font-medium text-link hover:underline">
             Log in
           </Link>
         </p>

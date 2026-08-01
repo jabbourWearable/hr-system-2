@@ -57,31 +57,39 @@ export function CheckInOut({ hasSite, siteName, initialIsCheckedIn }: Props) {
 
   if (!hasSite) {
     return (
-      <p className="text-sm text-foreground-muted">
+      <p className="text-sm text-mute">
         No work site assigned — contact your admin.
       </p>
     );
   }
 
   return (
-    <div className="space-y-2">
-      {siteName && (
-        <p className="text-sm text-foreground-muted">
-          Assigned site: <span className="font-medium text-foreground">{siteName}</span>
-        </p>
-      )}
+    <div className="space-y-3">
+      <p className="flex items-center gap-2 text-sm text-mute">
+        <span
+          aria-hidden
+          className={`h-2 w-2 rounded-full ${isCheckedIn ? "bg-accent-green" : "bg-stone"}`}
+        />
+        {isCheckedIn ? "Checked in" : "Checked out"}
+        {siteName && (
+          <>
+            <span className="text-stone">·</span>
+            <span className="font-medium text-ink">{siteName}</span>
+          </>
+        )}
+      </p>
       <button
         type="button"
         disabled={pending}
         onClick={handleClick}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+        className="btn btn-primary"
       >
         {pending ? "Working…" : isCheckedIn ? "Check Out" : "Check In"}
       </button>
       {message && (
         <p
           role="alert"
-          className={`text-sm ${message.type === "error" ? "text-red-600" : "text-green-600"}`}
+          className={`text-sm ${message.type === "error" ? "text-accent-red" : "text-accent-green"}`}
         >
           {message.text}
         </p>

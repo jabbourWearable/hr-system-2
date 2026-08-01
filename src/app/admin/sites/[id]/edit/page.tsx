@@ -25,17 +25,17 @@ export default async function EditSitePage({
   const updateSiteWithId = updateSite.bind(null, site.id);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">Edit site</h1>
+        <h1 className="display-serif text-3xl">Edit site</h1>
         <Link
           href="/admin/sites"
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-sm font-medium text-link hover:underline"
         >
           Back to sites
         </Link>
       </div>
-      <div className="max-w-md">
+      <div className="card max-w-md p-6">
         <SiteForm
           action={updateSiteWithId}
           submitLabel="Save changes"

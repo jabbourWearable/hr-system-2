@@ -4,56 +4,299 @@
    (src/components/theme/theme-toggle.tsx), not only OS preference. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* Design tokens implement DESIGN.md (Resend design language, HR-62) at the
+   repo root. Dark theme is the canonical palette, copied verbatim from
+   DESIGN.md's `colors:` block. Light theme is a derived variant built from
+   the template's on-light/email-mockup-inset tokens so the existing
+   light/dark/system toggle keeps working. */
 :root {
-  --background: #ffffff;
-  --surface: #f8fafc;
-  --foreground: #0f172a;
-  --foreground-muted: #475569;
-  --border: #e2e8f0;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
+  color-scheme: light;
+  --canvas: #ffffff;
+  --card: #f9fafb;
+  --elevated: #f1f3f6;
+  --deep: #f5f7fa;
+  --ink: #000000;
+  --body-color: rgba(0, 0, 51, 0.8);
+  --mute: rgba(0, 0, 51, 0.62);
+  --ash: rgba(0, 0, 51, 0.45);
+  --stone: rgba(0, 0, 51, 0.3);
+  --hairline: rgba(0, 0, 20, 0.07);
+  --hairline-strong: rgba(0, 0, 20, 0.14);
+  --divider: rgba(0, 0, 20, 0.04);
+  --primary: #000000;
+  --primary-on: #ffffff;
+  --primary-pressed: #26262b;
+  --link: #0866cc;
+  --accent-orange: #c25100;
+  --accent-yellow: #9a6700;
+  --accent-blue: #0866cc;
+  --accent-green: #00804a;
+  --accent-red: #df1c41;
+  --glow: rgba(0, 117, 255, 0.12);
+  --glow-orange: rgba(255, 89, 0, 0.1);
+  --glow-green: rgba(34, 255, 153, 0.12);
+  --glow-red: rgba(255, 32, 71, 0.1);
 }
 
 [data-theme="dark"] {
-  --background: #0b1120;
-  --surface: #111827;
-  --foreground: #f1f5f9;
-  --foreground-muted: #94a3b8;
-  --border: #1f2937;
-  --primary: #3b82f6;
-  --primary-foreground: #0b1120;
+  color-scheme: dark;
+  --canvas: #000000;
+  --card: #0a0a0c;
+  --elevated: #101012;
+  --deep: #06060a;
+  --ink: #fcfdff;
+  --body-color: rgba(252, 253, 255, 0.86);
+  --mute: #a1a4a5;
+  --ash: #888e90;
+  --stone: #464a4d;
+  --hairline: rgba(255, 255, 255, 0.06);
+  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --divider: rgba(255, 255, 255, 0.04);
+  --primary: #fcfdff;
+  --primary-on: #000000;
+  --primary-pressed: #f1f7fe;
+  --link: #3b9eff;
+  --accent-orange: #ff801f;
+  --accent-yellow: #ffc53d;
+  --accent-blue: #3b9eff;
+  --accent-green: #11ff99;
+  --accent-red: #ff2047;
+  --glow: rgba(0, 117, 255, 0.34);
+  --glow-orange: rgba(255, 89, 0, 0.22);
+  --glow-green: rgba(34, 255, 153, 0.18);
+  --glow-red: rgba(255, 32, 71, 0.34);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #0b1120;
-    --surface: #111827;
-    --foreground: #f1f5f9;
-    --foreground-muted: #94a3b8;
-    --border: #1f2937;
-    --primary: #3b82f6;
-    --primary-foreground: #0b1120;
+    color-scheme: dark;
+    --canvas: #000000;
+    --card: #0a0a0c;
+    --elevated: #101012;
+    --deep: #06060a;
+    --ink: #fcfdff;
+    --body-color: rgba(252, 253, 255, 0.86);
+    --mute: #a1a4a5;
+    --ash: #888e90;
+    --stone: #464a4d;
+    --hairline: rgba(255, 255, 255, 0.06);
+    --hairline-strong: rgba(255, 255, 255, 0.14);
+    --divider: rgba(255, 255, 255, 0.04);
+    --primary: #fcfdff;
+    --primary-on: #000000;
+    --primary-pressed: #f1f7fe;
+    --link: #3b9eff;
+    --accent-orange: #ff801f;
+    --accent-yellow: #ffc53d;
+    --accent-blue: #3b9eff;
+    --accent-green: #11ff99;
+    --accent-red: #ff2047;
+    --glow: rgba(0, 117, 255, 0.34);
+    --glow-orange: rgba(255, 89, 0, 0.22);
+    --glow-green: rgba(34, 255, 153, 0.18);
+    --glow-red: rgba(255, 32, 71, 0.34);
   }
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-foreground: var(--foreground);
-  --color-foreground-muted: var(--foreground-muted);
-  --color-border: var(--border);
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-elevated: var(--elevated);
+  --color-deep: var(--deep);
+  --color-ink: var(--ink);
+  --color-body: var(--body-color);
+  --color-mute: var(--mute);
+  --color-ash: var(--ash);
+  --color-stone: var(--stone);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-divider: var(--divider);
   --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-on: var(--primary-on);
+  --color-link: var(--link);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-green: var(--accent-green);
+  --color-accent-red: var(--accent-red);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument-serif);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--canvas);
+  color: var(--body-color);
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+:focus-visible {
+  outline: 2px solid var(--stone);
+  outline-offset: 2px;
+}
+
+/* --- DESIGN.md component vocabulary ------------------------------------ */
+
+/* Editorial display serif (Instrument Serif standing in for Domaine
+   Display, per DESIGN.md's font-substitutes note: weight 400, tight
+   line-height, ss01/liga engaged). */
+@utility display-serif {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-feature-settings: "ss01", "liga";
+}
+
+/* Monospace uppercase eyebrow — the "monospace accents" of the template,
+   used for section headers and table column labels. */
+@utility section-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* feature-card: surface-card + 1px hairline-strong + rounded 12px.
+   No drop shadows anywhere — hairlines carry elevation (DESIGN.md). */
+@utility card {
+  background: var(--card);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+}
+
+/* Buttons: 36px tall, 8px radius, Inter-class 14px/500 labels. */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* button-primary: the brightest pixel on the canvas — white on black in
+   dark mode. Pressed state maps to DESIGN.md's surface-light. */
+@utility btn-primary {
+  background: var(--primary);
+  color: var(--primary-on);
+
+  &:hover:not(:disabled) {
+    background: var(--primary-pressed);
+  }
+}
+
+/* button-ghost: surface-elevated + hairline-strong border. */
+@utility btn-ghost {
+  background: var(--elevated);
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+
+  &:hover:not(:disabled) {
+    border-color: var(--stone);
+  }
+}
+
+/* button-outline: canvas background + hairline-strong border. */
+@utility btn-outline {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+
+  &:hover:not(:disabled) {
+    background: var(--elevated);
+  }
+}
+
+/* Destructive variant of button-outline (accent-red stays inline-only per
+   DESIGN.md — never a solid surface). */
+@utility btn-danger {
+  background: transparent;
+  color: var(--accent-red);
+  border: 1px solid var(--hairline-strong);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent-red) 8%, transparent);
+    border-color: color-mix(in srgb, var(--accent-red) 40%, transparent);
+  }
+}
+
+/* text-input: surface-card + hairline-strong, 8px radius, 40px tall.
+   Focus thickens the border to ink — no separate ring colour (DESIGN.md). */
+@utility field {
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 9px 14px;
+  font-size: 14px;
+  color: var(--ink);
+  transition: border-color 0.15s ease;
+
+  &::placeholder {
+    color: var(--stone);
+  }
+
+  &:focus {
+    border-color: var(--ink);
+    outline: none;
+  }
+}
+
+/* Atmospheric section glow: a single low-opacity radial wash anchored at
+   the top edge of a section, falling off to canvas. Never two glows in the
+   same section. Parent needs `relative overflow-hidden`. */
+@utility atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 60% at 50% -12%,
+    var(--glow-color, var(--glow)),
+    transparent 68%
+  );
+}
+
+@utility atmosphere-green {
+  --glow-color: var(--glow-green);
+}
+
+@utility atmosphere-orange {
+  --glow-color: var(--glow-orange);
+}
+
+@utility atmosphere-red {
+  --glow-color: var(--glow-red);
 }
 
 /* Theme toggle (light/dark/system) — rendered in the root layout header. */
@@ -61,8 +304,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--elevated);
+  border: 1px solid var(--hairline-strong);
   border-radius: 9999px;
   padding: 2px;
 }
@@ -72,7 +315,7 @@ body {
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--foreground-muted);
+  color: var(--mute);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -80,5 +323,5 @@ body {
 
 .theme-toggle-option[data-active="true"] {
   background: var(--primary);
-  color: var(--primary-foreground);
+  color: var(--primary-on);
 }

@@ -26,34 +26,39 @@ export default async function LeaveApprovalsPage() {
   );
 
   return (
-    <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Leave approvals</h1>
-          <p className="text-sm text-foreground-muted">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl">Leave approvals</h1>
+          <p className="text-sm text-mute">
             Pending leave requests from your direct reports.
           </p>
         </div>
-        <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/dashboard" className="text-sm font-medium text-link hover:underline">
           Back to dashboard
         </Link>
       </div>
 
       {!requests || requests.length === 0 ? (
-        <p className="text-sm text-foreground-muted">No pending requests.</p>
+        <p className="text-sm text-mute">No pending requests.</p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="max-w-2xl space-y-4">
           {requests.map((request) => {
             const requester = profileMap.get(request.user_id);
             return (
-              <li key={request.id} className="rounded-md border border-border p-4">
-                <div className="mb-2">
-                  <p className="font-medium">{requester?.fullName ?? "Unknown employee"}</p>
-                  <p className="text-sm capitalize text-foreground-muted">
-                    {request.leave_type} · {request.start_date} → {request.end_date}
+              <li key={request.id} className="card p-6">
+                <div className="mb-2 space-y-0.5">
+                  <p className="font-medium text-ink">
+                    {requester?.fullName ?? "Unknown employee"}
+                  </p>
+                  <p className="text-sm capitalize text-mute">
+                    {request.leave_type} ·{" "}
+                    <span className="font-mono text-[13px] normal-case">
+                      {request.start_date} → {request.end_date}
+                    </span>
                   </p>
                 </div>
-                <p className="mb-3 text-sm">{request.reason}</p>
+                <p className="mb-4 text-sm">{request.reason}</p>
                 <ReviewForm requestId={request.id} action={reviewAsManager} />
               </li>
             );

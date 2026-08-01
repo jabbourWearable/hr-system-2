@@ -38,22 +38,22 @@ export default async function EditEmployeePage({
   const updateEmployeeWithId = updateEmployeeProfile.bind(null, profile.id);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Edit {profile.full_name}</h1>
-          <p className="text-sm text-foreground-muted">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl">Edit {profile.full_name}</h1>
+          <p className="font-mono text-sm text-mute">
             {emailRow?.email ?? "No email on file"}
           </p>
         </div>
         <Link
           href="/admin/employees"
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-sm font-medium text-link hover:underline"
         >
           Back to employees
         </Link>
       </div>
-      <div className="max-w-md">
+      <div className="card max-w-md p-6">
         <EmployeeForm
           action={updateEmployeeWithId}
           managers={(allProfiles ?? []).map((p) => ({ id: p.id, fullName: p.full_name }))}

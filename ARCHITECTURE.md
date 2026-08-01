@@ -241,7 +241,8 @@ screenshots and close out HR-10.
 ## Theming
 
 Light/dark/system theme toggle, per ArchitectUX's standing foundation
-requirement:
+requirement. As of HR-62 the tokens implement the Resend design language —
+see "Design system (HR-62)" below and `DESIGN.md` at the repo root.
 
 - `src/app/globals.css` defines tokens in `:root` (light) and
   `[data-theme="dark"]`, plus a `@custom-variant dark (...)` so Tailwind's
@@ -839,3 +840,53 @@ attempt mistakenly POSTed a real signup call for
 of only checking availability — caught immediately and deleted before doing
 anything else, so the email was left free rather than pre-registered with a
 password the actual user wouldn't know.)
+
+## Design system (HR-62): Resend design language via DESIGN.md
+
+HR-62 redesigned every UI surface to follow the **Resend** design template
+from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)
+(the template published at getdesign.md/resend/design-md). The governing
+document is **`DESIGN.md` at the repo root** — a plain-text design-system
+spec (colors, typography, spacing, components, do's/don'ts) meant to be
+read by AI agents before doing any UI work. **Any future UI change must
+follow `DESIGN.md`.**
+
+How it maps onto this codebase:
+
+- **Tokens** (`src/app/globals.css`): the dark palette is copied verbatim
+  from `DESIGN.md`'s `colors:` block — true-black `--canvas`, `#fcfdff`
+  `--ink`, surface steps (`--card` #0a0a0c / `--elevated` #101012 /
+  `--deep` #06060a), translucent-white `--hairline` (6%) and
+  `--hairline-strong` (14%) borders, six accent colours plus `--glow-*`
+  tokens for atmospheric washes. The light theme is a derived
+  "email-mockup inset" variant (built from the template's on-light tokens)
+  so the pre-existing light/dark/system toggle keeps working; dark is the
+  canonical brand look. `color-scheme` is set per theme so native controls
+  (selects, date pickers) render correctly.
+- **Fonts** (`src/app/layout.tsx`): Instrument Serif (via `next/font`)
+  stands in for the proprietary Domaine Display per DESIGN.md's
+  substitution note; Geist = UI/body sans, Geist Mono = data/code accents.
+- **Component vocabulary** (Tailwind v4 `@utility` in `globals.css`):
+  `display-serif` (editorial headlines, weight 400, tight line-height),
+  `section-label` (mono uppercase 11px eyebrows — used for section headers
+  and table column labels), `card` (surface-card + hairline-strong + 12px
+  radius; **no drop shadows anywhere** — hairlines carry elevation),
+  `btn`/`btn-primary`/`btn-ghost`/`btn-outline`/`btn-danger`/`btn-sm`
+  (36px tall, 8px radius; primary = white-on-black, the page's brightest
+  pixel), `field` (inputs: card bg, hairline-strong border, focus thickens
+  border to ink — no ring), `atmosphere` (+`-green`/`-orange`/`-red`)
+  radial glow washes, one max per section.
+- **Patterns**: status semantics use neutral pills with coloured dots
+  (`src/components/leave/status-badge.tsx`, check-in state, unread
+  notifications) — accents are never solid surfaces. Tabular data
+  (dates, times, coordinates, emails, codes) renders in Geist Mono.
+  Page shells use `mx-auto max-w-5xl` with generous vertical rhythm.
+- **Legacy tokens removed**: `--background/--surface/--foreground/
+  --foreground-muted/--border/--primary-foreground` are gone; the old
+  `text-primary` link styling is now `text-link` (accent blue), while
+  `bg-primary` is the white CTA surface.
+
+Verification: `npm run build` clean; live Playwright pass over all
+surfaces (signup → dashboard → leave/attendance; admin promoted via SQL →
+admin overview/employees/sites/attendance) in dark and light,
+screenshots in `qa-evidence/hr-62-redesign/`.

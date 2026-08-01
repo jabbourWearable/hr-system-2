@@ -22,15 +22,15 @@ export function AttendanceFilters({
 }: Props) {
   return (
     <form method="get" action={action} className="flex flex-wrap items-end gap-3 text-sm">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="employeeId" className="text-foreground-muted">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="employeeId" className="section-label">
           Employee
         </label>
         <select
           id="employeeId"
           name="employeeId"
           defaultValue={defaultEmployeeId ?? ""}
-          className="rounded-md border border-border bg-background px-2 py-1.5"
+          className="field"
         >
           <option value="">All</option>
           {employees.map((employee) => (
@@ -40,8 +40,8 @@ export function AttendanceFilters({
           ))}
         </select>
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="from" className="text-foreground-muted">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="from" className="section-label">
           From
         </label>
         <input
@@ -49,11 +49,11 @@ export function AttendanceFilters({
           id="from"
           name="from"
           defaultValue={defaultFrom}
-          className="rounded-md border border-border bg-background px-2 py-1.5"
+          className="field font-mono text-[13px]"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="to" className="text-foreground-muted">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="to" className="section-label">
           To
         </label>
         <input
@@ -61,17 +61,17 @@ export function AttendanceFilters({
           id="to"
           name="to"
           defaultValue={defaultTo}
-          className="rounded-md border border-border bg-background px-2 py-1.5"
+          className="field font-mono text-[13px]"
         />
       </div>
-      <button
-        type="submit"
-        className="rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground"
-      >
+      <button type="submit" className="btn btn-primary">
         Filter
       </button>
       {(defaultEmployeeId || defaultFrom || defaultTo) && (
-        <Link href={action} className="px-1 py-1.5 font-medium text-primary hover:underline">
+        <Link
+          href={action}
+          className="px-1 py-2 font-medium text-link hover:underline"
+        >
           Clear
         </Link>
       )}

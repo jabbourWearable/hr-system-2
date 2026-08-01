@@ -7,9 +7,9 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, undefined);
 
   return (
-    <form action={formAction} className="space-y-3">
-      <div className="space-y-1">
-        <label htmlFor="email" className="text-sm font-medium">
+    <form action={formAction} className="space-y-4">
+      <div className="space-y-1.5">
+        <label htmlFor="email" className="text-sm font-medium text-ink">
           Email
         </label>
         <input
@@ -18,11 +18,11 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         />
       </div>
-      <div className="space-y-1">
-        <label htmlFor="password" className="text-sm font-medium">
+      <div className="space-y-1.5">
+        <label htmlFor="password" className="text-sm font-medium text-ink">
           Password
         </label>
         <input
@@ -31,19 +31,15 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         />
       </div>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent-red">
           {state.error}
         </p>
       )}
-      <button
-        disabled={pending}
-        type="submit"
-        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-      >
+      <button disabled={pending} type="submit" className="btn btn-primary w-full">
         {pending ? "Logging in…" : "Log in"}
       </button>
     </form>

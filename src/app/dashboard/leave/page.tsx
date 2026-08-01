@@ -17,56 +17,54 @@ export default async function LeaveRequestsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <main className="flex flex-1 flex-col gap-8 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Leave requests</h1>
-          <p className="text-sm text-foreground-muted">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl">Leave requests</h1>
+          <p className="text-sm text-mute">
             Submit a leave request and track its status.
           </p>
         </div>
-        <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/dashboard" className="text-sm font-medium text-link hover:underline">
           Back to dashboard
         </Link>
       </div>
 
       <section className="max-w-md space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
-          New request
-        </h2>
-        <LeaveRequestForm />
+        <h2 className="section-label">New request</h2>
+        <div className="card p-6">
+          <LeaveRequestForm />
+        </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
-          My requests
-        </h2>
+        <h2 className="section-label">My requests</h2>
         {!requests || requests.length === 0 ? (
-          <p className="text-sm text-foreground-muted">No leave requests yet.</p>
+          <p className="text-sm text-mute">No leave requests yet.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-border">
+          <div className="card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-surface text-left">
+              <thead className="border-b border-hairline-strong text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Type</th>
-                  <th className="px-3 py-2 font-medium">Dates</th>
-                  <th className="px-3 py-2 font-medium">Reason</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Reviewer comment</th>
+                  <th className="section-label px-4 py-3">Type</th>
+                  <th className="section-label px-4 py-3">Dates</th>
+                  <th className="section-label px-4 py-3">Reason</th>
+                  <th className="section-label px-4 py-3">Status</th>
+                  <th className="section-label px-4 py-3">Reviewer comment</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-hairline">
                 {requests.map((request) => (
-                  <tr key={request.id} className="border-t border-border align-top">
-                    <td className="px-3 py-2 capitalize">{request.leave_type}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">
+                  <tr key={request.id} className="align-top">
+                    <td className="px-4 py-3 capitalize text-ink">{request.leave_type}</td>
+                    <td className="px-4 py-3 font-mono text-[13px] whitespace-nowrap">
                       {request.start_date} → {request.end_date}
                     </td>
-                    <td className="max-w-xs px-3 py-2">{request.reason}</td>
-                    <td className="px-3 py-2">
+                    <td className="max-w-xs px-4 py-3">{request.reason}</td>
+                    <td className="px-4 py-3">
                       <LeaveStatusBadge status={request.status} />
                     </td>
-                    <td className="px-3 py-2 text-foreground-muted">
+                    <td className="px-4 py-3 text-mute">
                       {request.review_comment ?? "—"}
                     </td>
                   </tr>

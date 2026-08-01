@@ -30,31 +30,31 @@ export function EmployeeForm({
   const [state, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="space-y-3">
-      <div className="space-y-1">
-        <label htmlFor="role" className="text-sm font-medium">
+    <form action={formAction} className="space-y-4">
+      <div className="space-y-1.5">
+        <label htmlFor="role" className="text-sm font-medium text-ink">
           Role
         </label>
         <select
           id="role"
           name="role"
           defaultValue={defaultValues.role}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         >
           <option value="employee">Employee</option>
           <option value="manager">Manager</option>
           <option value="admin">Admin</option>
         </select>
       </div>
-      <div className="space-y-1">
-        <label htmlFor="managerId" className="text-sm font-medium">
+      <div className="space-y-1.5">
+        <label htmlFor="managerId" className="text-sm font-medium text-ink">
           Manager
         </label>
         <select
           id="managerId"
           name="managerId"
           defaultValue={defaultValues.managerId ?? ""}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         >
           <option value="">Unassigned</option>
           {managers.map((manager) => (
@@ -64,15 +64,15 @@ export function EmployeeForm({
           ))}
         </select>
       </div>
-      <div className="space-y-1">
-        <label htmlFor="siteId" className="text-sm font-medium">
+      <div className="space-y-1.5">
+        <label htmlFor="siteId" className="text-sm font-medium text-ink">
           Work site
         </label>
         <select
           id="siteId"
           name="siteId"
           defaultValue={defaultValues.siteId ?? ""}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+          className="field w-full"
         >
           <option value="">Unassigned</option>
           {sites.map((site) => (
@@ -83,15 +83,11 @@ export function EmployeeForm({
         </select>
       </div>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent-red">
           {state.error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "Saving…" : submitLabel}
       </button>
     </form>

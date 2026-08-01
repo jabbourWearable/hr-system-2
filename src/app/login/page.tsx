@@ -5,13 +5,17 @@ import { LoginForm } from "./login-form";
 // (spec §2, §11 Q3 default).
 export default function LoginPage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-4">
-        <h1 className="text-xl font-semibold">Log in</h1>
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-16">
+      <div className="atmosphere" aria-hidden />
+      <div className="card relative w-full max-w-sm space-y-5 p-8">
+        <div className="space-y-1">
+          <h1 className="display-serif text-3xl">Log in</h1>
+          <p className="text-sm text-mute">Welcome back.</p>
+        </div>
         <LoginForm />
-        <p className="text-sm text-foreground-muted">
+        <p className="text-sm text-mute">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary underline">
+          <Link href="/signup" className="font-medium text-link hover:underline">
             Sign up
           </Link>
         </p>

@@ -79,19 +79,27 @@ export function NotificationsList({ userId, initialNotifications }: Props) {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <section className="max-w-sm space-y-2">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-muted">
+    <section className="max-w-md space-y-3">
+      <h2 className="section-label">
         Notifications{unreadCount > 0 ? ` (${unreadCount})` : ""}
       </h2>
       {notifications.length === 0 ? (
-        <p className="text-sm text-foreground-muted">No notifications yet.</p>
+        <p className="text-sm text-mute">No notifications yet.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-md border border-border text-sm">
+        <ul className="card divide-y divide-hairline overflow-hidden text-sm">
           {notifications.map((n) => (
-            <li key={n.id} className="flex items-start justify-between gap-3 px-3 py-2">
-              <div>
-                <p className={n.is_read ? "text-foreground-muted" : "font-medium"}>{n.message}</p>
-                <p className="text-xs text-foreground-muted">
+            <li key={n.id} className="flex items-start justify-between gap-3 px-4 py-3">
+              <div className="space-y-0.5">
+                <p className={n.is_read ? "text-mute" : "font-medium text-ink"}>
+                  {!n.is_read && (
+                    <span
+                      aria-hidden
+                      className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-accent-green align-middle"
+                    />
+                  )}
+                  {n.message}
+                </p>
+                <p className="font-mono text-xs text-ash">
                   {new Date(n.created_at).toLocaleString()}
                 </p>
               </div>
@@ -100,7 +108,7 @@ export function NotificationsList({ userId, initialNotifications }: Props) {
                   type="button"
                   disabled={pendingId === n.id}
                   onClick={() => handleMarkRead(n.id)}
-                  className="shrink-0 rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-surface disabled:opacity-60"
+                  className="btn btn-sm btn-outline shrink-0"
                 >
                   Mark read
                 </button>
