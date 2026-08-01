@@ -1,0 +1,54 @@
+{
+  "base": "https://hr-system-2-iota.vercel.app",
+  "total": 6,
+  "passed": 6,
+  "failed": [],
+  "results": [
+    {
+      "name": "admin-login",
+      "ok": true,
+      "path": "/login",
+      "notes": []
+    },
+    {
+      "name": "adm-01-admin-home",
+      "path": "/admin",
+      "ok": true,
+      "finalUrl": "/admin",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "adm-02-employees",
+      "path": "/admin/employees",
+      "ok": true,
+      "finalUrl": "/admin/employees",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "adm-03-attendance",
+      "path": "/admin/attendance",
+      "ok": true,
+      "finalUrl": "/admin/attendance",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "adm-04-leave",
+      "path": "/admin/leave",
+      "ok": true,
+      "finalUrl": "/admin/leave",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "adm-05-sites",
+      "path": "/admin/sites",
+      "ok": true,
+      "finalUrl": "/admin/sites",
+      "status": 200,
+      "notes": []
+    }
+  ]
+}

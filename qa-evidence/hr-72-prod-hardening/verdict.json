@@ -1,0 +1,138 @@
+{
+  "base": "https://hr-system-2-iota.vercel.app",
+  "total": 17,
+  "passed": 17,
+  "failed": [],
+  "results": [
+    {
+      "name": "emp-login",
+      "ok": true,
+      "path": "/login",
+      "notes": []
+    },
+    {
+      "name": "emp-01-dashboard",
+      "path": "/dashboard",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "emp-02-attendance",
+      "path": "/dashboard/attendance",
+      "ok": true,
+      "finalUrl": "/dashboard/attendance",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "emp-03-directory",
+      "path": "/dashboard/directory",
+      "ok": true,
+      "finalUrl": "/dashboard/directory",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "emp-04-profile",
+      "ok": true,
+      "path": "/dashboard/directory",
+      "notes": []
+    },
+    {
+      "name": "emp-05-org",
+      "path": "/dashboard/org",
+      "ok": true,
+      "finalUrl": "/dashboard/org",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "emp-06-kudos",
+      "path": "/dashboard/kudos",
+      "ok": true,
+      "finalUrl": "/dashboard/kudos",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "emp-07-leave",
+      "path": "/dashboard/leave",
+      "ok": true,
+      "finalUrl": "/dashboard/leave",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-login",
+      "ok": true,
+      "path": "/login",
+      "notes": []
+    },
+    {
+      "name": "mgr-01-dashboard",
+      "path": "/dashboard",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-02-leave-approvals",
+      "path": "/dashboard/leave/approvals",
+      "ok": true,
+      "finalUrl": "/dashboard/leave/approvals",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-03-team-attendance",
+      "path": "/dashboard/attendance/team",
+      "ok": true,
+      "finalUrl": "/dashboard/attendance/team",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-04-admin",
+      "path": "/admin",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-05-admin-employees",
+      "path": "/admin/employees",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-06-admin-attendance",
+      "path": "/admin/attendance",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-07-admin-leave",
+      "path": "/admin/leave",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    },
+    {
+      "name": "mgr-08-admin-sites",
+      "path": "/admin/sites",
+      "ok": true,
+      "finalUrl": "/dashboard",
+      "status": 200,
+      "notes": []
+    }
+  ]
+}
