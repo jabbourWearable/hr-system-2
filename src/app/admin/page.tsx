@@ -53,6 +53,7 @@ export default async function AdminPage() {
   ];
 
   const adminLinks = [
+    { href: "/admin/analytics", label: "Analytics" },
     { href: "/admin/employees", label: "Employee accounts" },
     { href: "/admin/sites", label: "Work sites" },
     { href: "/admin/attendance", label: "Attendance history" },

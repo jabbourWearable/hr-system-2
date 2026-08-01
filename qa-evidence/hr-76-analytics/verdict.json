@@ -1,0 +1,52 @@
+{
+  "base": "http://localhost:3111",
+  "passed": 8,
+  "total": 8,
+  "consoleErrors": [],
+  "results": [
+    {
+      "name": "analytics 30d(default)",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "analytics ?range=90d",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "analytics ?range=12m",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "hover readout appears",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "focus readout appears",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "table twin has rows",
+      "ok": true,
+      "notes": [
+        "rows=30"
+      ]
+    },
+    {
+      "name": "light mode renders",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "employee redirected",
+      "ok": true,
+      "notes": [
+        "->/dashboard"
+      ]
+    }
+  ]
+}

@@ -36,6 +36,11 @@
   --glow-orange: rgba(255, 89, 0, 0.1);
   --glow-green: rgba(34, 255, 153, 0.12);
   --glow-red: rgba(255, 32, 71, 0.1);
+  /* Chart series hue (HR-76 analytics): accent-blue stepped into the
+     dataviz lightness band for the card surface it renders on — validated
+     per mode with the dataviz palette checker, so don't swap in the raw
+     accent token here. */
+  --chart-series: #0866cc;
 }
 
 [data-theme="dark"] {
@@ -65,6 +70,7 @@
   --glow-orange: rgba(255, 89, 0, 0.22);
   --glow-green: rgba(34, 255, 153, 0.18);
   --glow-red: rgba(255, 32, 71, 0.34);
+  --chart-series: #2e93f7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -95,6 +101,7 @@
     --glow-orange: rgba(255, 89, 0, 0.22);
     --glow-green: rgba(34, 255, 153, 0.18);
     --glow-red: rgba(255, 32, 71, 0.34);
+    --chart-series: #2e93f7;
   }
 }
 
@@ -324,4 +331,32 @@ body {
 .theme-toggle-option[data-active="true"] {
   background: var(--primary);
   color: var(--primary-on);
+}
+
+/* --- Analytics charts (HR-76) ------------------------------------------ */
+/* CSS-only hover/focus layer for the server-rendered SVG charts
+   (src/components/analytics). Each time bucket is a `.viz-band` group
+   holding an invisible full-height hit rect (keyboard-focusable) plus a
+   `.viz-hover` readout (crosshair/highlight + value line) that only shows
+   while that band is hovered or focused — tooltips enhance, never gate:
+   every value is also in the chart's "View data" table twin. */
+.viz-band .viz-hover {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.viz-band:hover .viz-hover,
+.viz-band:focus-within .viz-hover {
+  opacity: 1;
+}
+
+.viz-band:hover .viz-mark,
+.viz-band:focus-within .viz-mark {
+  filter: brightness(1.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viz-band .viz-hover {
+    transition: none;
+  }
 }
