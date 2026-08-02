@@ -1,10 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const AUTH_ROUTES = ["/login", "/signup"];
+const AUTH_ROUTES = ["/login", "/signup", "/reset-password"];
 // /api/version is unauthenticated on purpose — the HR-73 deploy guard (CI +
 // scripts/deploy-prod.sh) polls it from outside any logged-in session.
-const PUBLIC_ROUTES = [...AUTH_ROUTES, "/", "/api/version"];
+// /auth/confirm (HR-88) must also be public — a visitor arriving from an
+// email link has no session cookie yet; that route is what creates one.
+const PUBLIC_ROUTES = [...AUTH_ROUTES, "/", "/api/version", "/auth/confirm"];
 
 /**
  * Refreshes the Supabase session cookie on every request and performs an

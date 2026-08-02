@@ -1,0 +1,59 @@
+{
+  "base": "http://localhost:3400",
+  "passed": 8,
+  "total": 8,
+  "results": [
+    {
+      "name": "signup succeeds",
+      "ok": true,
+      "notes": [
+        "http://localhost:3400/dashboard"
+      ]
+    },
+    {
+      "name": "password login still works (regression)",
+      "ok": true,
+      "notes": [
+        "http://localhost:3400/dashboard"
+      ]
+    },
+    {
+      "name": "magic-link request accepted for a mailable address",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "magic-link blocks signup for unknown address",
+      "ok": true,
+      "notes": [
+        "Signups not allowed for otp"
+      ]
+    },
+    {
+      "name": "reset-password request accepted",
+      "ok": true,
+      "notes": []
+    },
+    {
+      "name": "/update-password redirects unauthenticated visitors",
+      "ok": true,
+      "notes": [
+        "http://localhost:3400/login"
+      ]
+    },
+    {
+      "name": "bad/expired sign-in link shows a friendly banner (was: raw error)",
+      "ok": true,
+      "notes": [
+        "http://localhost:3400/login?error=link_expired"
+      ]
+    },
+    {
+      "name": "/auth/confirm with no params redirects cleanly",
+      "ok": true,
+      "notes": [
+        "http://localhost:3400/login?error=link_expired"
+      ]
+    }
+  ]
+}
