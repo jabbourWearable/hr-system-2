@@ -1132,8 +1132,9 @@ class of blocker as every Auth-config item in
 `project_hr_system_supabase_blocker.md`):
 
 1. **Email Templates → Magic Link / Reset Password** must use
-   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
-   (magic link) / `type=recovery` (reset), not the default
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type={{ .Type }}`
+   (the `{{ .Type }}` variable auto-resolves per template — `magiclink` /
+   `recovery` — so it doesn't need to be hardcoded), not the default
    `{{ .ConfirmationURL }}`. Left on the default, Supabase's own hosted
    `/auth/v1/verify` endpoint handles the click first and redirects with
    tokens in a URL hash fragment our server route never receives — so real
