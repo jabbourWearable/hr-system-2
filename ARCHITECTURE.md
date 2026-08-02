@@ -1084,3 +1084,79 @@ in-session save, not something another party needs to see instantly.
 Verification: `npm run build` clean; migration applied live via
 `psql "$DATABASE_URL"` and RLS policies confirmed via `\d` + `pg_policies`;
 live Playwright pass in `qa-evidence/hr-78-performance/capture.js`.
+
+## Passwordless sign-in + forgot password (HR-88)
+
+Login previously only supported email+password (a deliberate spec §2/§11 Q3
+default: no social buttons, no magic link, no forgot-password link). HR-88
+added two more first-class sign-in paths, both landing on a new
+`/auth/confirm` route handler:
+
+- **Magic link** (`sendSignInLink` in `src/app/login/actions.ts`):
+  `supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false,
+  emailRedirectTo } })`. `shouldCreateUser: false` is load-bearing — without
+  it, a magic-link request to an address with no account would silently
+  create a bare `auth.users` row with no matching `profiles` row, and
+  `getAuthenticatedUser()` (`src/lib/auth/session.ts`) would bounce that
+  session back to `/login` forever. New accounts still only come from
+  `/signup`, which collects the `full_name` `profiles` needs.
+- **Forgot password** (`src/app/reset-password/` +
+  `src/app/update-password/`): `resetPasswordForEmail()` → `/auth/confirm`
+  → `/update-password` (gated by `requireUser()`, same as any other
+  authenticated page) → `supabase.auth.updateUser({ password })`.
+
+`src/app/auth/confirm/route.ts` implements Supabase's current recommended
+SSR pattern — `token_hash` + `type` query params, verified server-side via
+`verifyOtp()` so the session cookie is set through our own `@supabase/ssr`
+client — rather than the older implicit flow (hash-fragment
+`access_token`/`refresh_token`, which a server route can never read). A
+bad/stale/already-used token redirects to `/login?error=link_expired` with
+a plain-language banner instead of a raw error or a dead end. It also
+backfills a missing `profiles` row after a successful verify, for any
+`auth.users` row that predates this app's own `/signup` (see below). Added
+to `proxy.ts`'s `PUBLIC_ROUTES` — a visitor arriving from an email link has
+no session cookie yet, so the route itself must be reachable
+unauthenticated.
+
+**Root cause of the originally-reported bug, and why it's not fully fixed
+by this code alone.** The reporter's screenshot of the "link expired" error
+is a different application's UI entirely (a "50+ Dating" login page) — this
+Supabase project previously hosted that unrelated dating app before HR-9
+repurposed it for this HR system (see
+`supabase/migrations/0000_reset_legacy_dating_app_schema.sql`). That reset
+only dropped `public` schema tables; `auth.users` rows and project-level
+Auth configuration (Site URL, Redirect URLs, email templates) are untouched
+by it and may still reflect the old app. Two dashboard-only settings this
+code cannot verify or change without a Supabase Personal Access Token (same
+class of blocker as every Auth-config item in
+`project_hr_system_supabase_blocker.md`):
+
+1. **Email Templates → Magic Link / Reset Password** must use
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
+   (magic link) / `type=recovery` (reset), not the default
+   `{{ .ConfirmationURL }}`. Left on the default, Supabase's own hosted
+   `/auth/v1/verify` endpoint handles the click first and redirects with
+   tokens in a URL hash fragment our server route never receives — so real
+   emails would still dead-end even with this code deployed.
+2. **URL Configuration → Site URL / Redirect URLs** should include
+   `https://hr-system-2-iota.vercel.app` — if still pointed at whatever
+   domain the legacy dating app used, links would misroute there instead.
+
+A pre-existing `auth.users` row for the test address requested on HR-88
+(`jaboordandan14@gmail.com`) already exists in this shared project with no
+known password (`/signup` returns "User already registered"; a guessed
+password fails) — likely predating this app. Rather than re-opening the
+long-standing `SUPABASE_SERVICE_ROLE_KEY`/DB-access ask just to force-set
+one password, the new "Forgot password?" / "Email me a sign-in link" paths
+let that account holder self-serve once the two settings above are
+confirmed — no elevated credential needed.
+
+Verification: `npm run build`/lint clean. `qa-evidence/hr-88-signin-magic-link/`:
+`capture.js` (signup/password-login regression, magic-link accept +
+shouldCreateUser:false-reject, reset-password accept, `/update-password`
+auth guard, bad-token and no-param `/auth/confirm` handling) — 8/8 against
+`localhost:3400` (`verdict.json`, including two real email sends to
+`@gmail.com` addresses), 6/8 against live prod on commit `da20f36`
+(`verdict-prod.json`) — the 2 failures are Supabase's shared mailer rate
+limit, exhausted by the local run's own real sends minutes earlier, not a
+code defect.
