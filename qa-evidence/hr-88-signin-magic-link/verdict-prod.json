@@ -1,0 +1,17 @@
+{
+  "base": "https://hr-system-2-iota.vercel.app",
+  "commit": "da20f36f9ce70fd1c93ca1fff08e19567d6ea3f4",
+  "passed": 6,
+  "total": 8,
+  "note": "The 2 failures are both auth-email-send steps failing with 'email rate limit exceeded' (Supabase's built-in mailer on this project's plan has a very low shared quota — a few emails/hour). That quota was already spent by this same verification pass run locally minutes earlier against the same Supabase project (2 real sends: magic-link + reset-password, both to real gmail.com addresses). This is a mailer-quota/infra limit, not a code defect: all 8 checks passed cleanly against localhost (see verdict.json) including both send-a-real-email steps, before the quota was exhausted. Recommend configuring custom SMTP in Supabase Dashboard -> Auth -> Emails for reliable delivery in real usage.",
+  "results": [
+    { "name": "signup succeeds", "ok": true },
+    { "name": "password login still works (regression)", "ok": true },
+    { "name": "magic-link request accepted for a mailable address", "ok": false, "notes": ["email rate limit exceeded"] },
+    { "name": "magic-link blocks signup for unknown address", "ok": true },
+    { "name": "reset-password request accepted", "ok": false, "notes": ["email rate limit exceeded"] },
+    { "name": "/update-password redirects unauthenticated visitors", "ok": true },
+    { "name": "bad/expired sign-in link shows a friendly banner (was: raw error)", "ok": true },
+    { "name": "/auth/confirm with no params redirects cleanly", "ok": true }
+  ]
+}
